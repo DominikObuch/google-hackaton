@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "angular-cli": {
+      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/ng",
+      "args": ["mcp"]
+    },
+    "nx": {
+      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/nx",
+      "args": ["mcp"]
+    },
+    "qmd": {
+      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/qmd",
+      "args": ["mcp"]
+    },
+    "ng-diagram": {
+      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/ng-diagram-mcp",
+      "args": []
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "--quiet",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:postgres@localhost:5432/nestDb"
+      ]
+    },
+    "triz-mcp-server": {
+      "url": "http://localhost:8123/mcp"
+    }
+  }
+}

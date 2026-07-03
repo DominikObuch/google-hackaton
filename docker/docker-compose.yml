@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: nest-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nestDb
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+
+  embeddings:
+    build:
+      context: ./embeddings
+    container_name: ollama-embeddings
+    restart: always
+    ports:
+      - '11434:8080'
+
+  mcp-server:
+    build:
+      context: ../mcp-server
+    container_name: triz-mcp-server
+    restart: always
+    ports:
+      - '8123:8123'
+    environment:
+      MCP_HOST: '0.0.0.0'
+      MCP_PORT: '8123'
+      EMBEDDING_MODEL: 'embeddinggemma:300m'
+      EMBEDDING_SERVICE_URL: 'http://embeddings:8080/v1'
+    depends_on:
+      - embeddings
+
+volumes:
+  pgdata:

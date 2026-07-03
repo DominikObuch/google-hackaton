@@ -1,0 +1,14 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-f',
+        'apps/api/Dockerfile',
+        '-t',
+        'us-central1-docker.pkg.dev/r2d2-00/buildwithai-repo/buildwithai-backend:latest',
+        '.',
+      ]
+    env: ['DOCKER_BUILDKIT=1']
+images:
+  - 'us-central1-docker.pkg.dev/r2d2-00/buildwithai-repo/buildwithai-backend:latest'

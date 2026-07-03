@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nx-mcp": {
+      "command": "npx",
+      "args": ["nx", "mcp"]
+    },
+    "ng-diagram-docs": {
+      "command": "npx",
+      "args": ["-y", "@ng-diagram/mcp"]
+    }
+  },
+  "contextFileName": "AGENTS.md"
+}
