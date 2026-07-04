@@ -8,6 +8,7 @@ import { TrizModule } from './triz/triz.module';
 import { GoogleModule } from './google/google.module';
 import { TopologyModule } from './topology/topology.module';
 import { ArenaModule } from './arena/arena.module';
+import { SolverModule } from './solver/solver.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ArenaModule } from './arena/arena.module';
     UserModule,
     OrderModule,
     TrizModule,
+    SolverModule,
     GoogleModule,
     TopologyModule,
     ArenaModule,

@@ -4,3 +4,4 @@ export { TrizHttp } from './triz/triz-http';
 export { GoogleHttp } from './google/google-http';
 export type { GoogleConnectionStatus } from './google/google-http';
 export * from './arena/arena-http';
+export * from './solver/solver-http';
