@@ -7,6 +7,7 @@ from app.tools.contradictions import (
     get_random_principles,
     search_parameter,
     search_principle,
+    get_entire_matrix,
 )
 
 tools = [
@@ -17,6 +18,7 @@ tools = [
     get_random_principles,
     get_principle_by_id,
     get_parameter_by_id,
+    get_entire_matrix,
 ]
 
 

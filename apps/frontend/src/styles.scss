@@ -1,7 +1,40 @@
 @use '@angular/material' as mat;
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Giggs Design Tokens (Cupertino Dark) */
+  --ag-color-background: #131315;
+  --ag-color-surface: #2c2c2e;
+  --ag-color-surface-dim: #131315;
+  --ag-color-surface-low: #1b1b1d;
+  --ag-color-surface-high: #2a2a2c;
+  --ag-color-surface-highest: #353437;
+  --ag-color-accent: #0a84ff; /* Apple Blue */
+  --ag-color-success: #30d158; /* Emerald Green */
+  --ag-color-error: #ff453a; /* Cupertino Red */
+  
+  --ag-color-text-main: #ffffff;
+  --ag-color-text-secondary: #8e8e93;
+  --ag-color-text-muted: #636366;
+  --ag-color-border: #38383a;
+  
+  --ag-space-sm: 8px;
+  --ag-space-md: 16px;
+  --ag-space-lg: 24px;
+  --ag-space-xl: 32px;
+  
+  --ag-radius-sm: 4px;
+  --ag-radius-md: 8px;
+  --ag-radius-lg: 12px;
+  --ag-radius-xl: 16px;
+  --ag-radius-full: 9999px;
+}
+
 html {
-  color-scheme: light dark;
+  color-scheme: dark;
   @include mat.theme(
     (
       color: (
@@ -18,5 +51,39 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background-color: var(--ag-color-background);
+  color: var(--ag-color-text-main);
+  font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/* Custom overrides for ng-diagram edges styling */
+ng-diagram-base-edge.default-edge {
+  --edge-stroke: var(--ag-color-border) !important;
+  --edge-stroke-width: 2.5 !important;
+  --edge-stroke-transition: stroke 0.2s ease !important;
+}
+
+ng-diagram-base-edge.default-edge.active-connection {
+  --edge-stroke: var(--ag-color-accent) !important;
+  --edge-stroke-dasharray: 6 6 !important;
+}
+
+ng-diagram-base-edge.default-edge.error-connection {
+  --edge-stroke: var(--ag-color-error) !important;
+}
+
+/* Custom scrollbars matching Giggs dark UI */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #414754;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #636366;
 }

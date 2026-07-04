@@ -3,8 +3,28 @@ import { Route } from '@angular/router';
 export const appRoutes: Route[] = [
   {
     path: '',
-    redirectTo: 'users',
+    redirectTo: 'workbench',
     pathMatch: 'full',
+  },
+  {
+    path: 'workbench',
+    loadComponent: () =>
+      import('./pages/workbench-page/workbench-page').then((m) => m.WorkbenchPage),
+  },
+  {
+    path: 'matrix',
+    loadComponent: () =>
+      import('./pages/matrix-page/matrix-page').then((m) => m.MatrixPage),
+  },
+  {
+    path: 'arena',
+    loadComponent: () =>
+      import('./pages/arena-page/arena-page').then((m) => m.ArenaPage),
+  },
+  {
+    path: 'topology',
+    loadComponent: () =>
+      import('./pages/topology-page/topology-page').then((m) => m.TopologyPage),
   },
   {
     path: 'users',

@@ -107,3 +107,22 @@ def get_parameter_by_id(parameter_id: int) -> str:
         return output.strip()
     except Exception as e:
         return f"Error retrieving parameter: {e}"
+
+
+def get_entire_matrix() -> str:
+    """Return the entire 39x39 contradiction matrix as a JSON-encoded string mapping 'row-col' -> 'principles'."""
+    try:
+        from pytriz.store import _load_matrix
+        m = _load_matrix()
+        res = {}
+        for r in range(39):
+            for c in range(39):
+                val = m[r, c].strip()
+                if val:
+                    res[f"{r+1}-{c+1}"] = val
+        import json
+        return json.dumps(res)
+    except Exception as e:
+        import json
+        return json.dumps({"error": str(e)})
+

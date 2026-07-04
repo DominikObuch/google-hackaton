@@ -4,12 +4,14 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { UserModule } from './user/user.module';
 import { OrderModule } from './order/order.module';
 import { DatabaseService } from './db.service';
+import { TrizModule } from './triz/triz.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UserModule,
     OrderModule,
+    TrizModule,
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,3 +32,4 @@ import { DatabaseService } from './db.service';
   providers: [DatabaseService],
 })
 export class AppModule {}
+
