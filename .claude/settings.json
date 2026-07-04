@@ -14,5 +14,15 @@
     "network": {
       "allowedDomains": ["www.google-analytics.com"]
     }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "Bash(dig *)",
+      "mcp__context7__query-docs",
+      "mcp__context7__resolve-library-id",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__get_logs"
+    ]
   }
 }
