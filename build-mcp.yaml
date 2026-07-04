@@ -1,12 +1,19 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build',
-        '-t',
-        'europe-west1-docker.pkg.dev/lofty-advantage-501408-f9/buildwithai-repo/triz-mcp-server:latest',
-        './mcp-server',
-      ]
+    args: [
+      'build',
+      '-t', '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REGISTRY_NAME}/triz-mcp-server:latest',
+      './mcp-server'
+    ]
     env: ['DOCKER_BUILDKIT=1']
+
 images:
-  - 'europe-west1-docker.pkg.dev/lofty-advantage-501408-f9/buildwithai-repo/triz-mcp-server:latest'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REGISTRY_NAME}/triz-mcp-server:latest'
+
+substitutions:
+  _PROJECT_ID: 'lofty-advantage-501408-f9'
+  _REGION: 'europe-west1'
+  _REGISTRY_NAME: 'buildwithai-repo'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

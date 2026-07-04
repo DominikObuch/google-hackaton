@@ -116,18 +116,25 @@ gcp-create-db:
 # ==========================================================================
 
 build-mcp:
-	gcloud builds submit --config=build-mcp.yaml
+	gcloud builds submit --config=build-mcp.yaml \
+		--substitutions=_PROJECT_ID=$(GCP_PROJECT),_REGION=$(REGION),_REGISTRY_NAME=$(REGISTRY_NAME)
 
 build-agent:
-	gcloud builds submit --config=build-agent.yaml
+	gcloud builds submit --config=build-agent.yaml \
+		--substitutions=_PROJECT_ID=$(GCP_PROJECT),_REGION=$(REGION),_REGISTRY_NAME=$(REGISTRY_NAME)
 
 build-backend:
-	gcloud builds submit --config=build-backend.yaml
+	gcloud builds submit --config=build-backend.yaml \
+		--substitutions=_PROJECT_ID=$(GCP_PROJECT),_REGION=$(REGION),_REGISTRY_NAME=$(REGISTRY_NAME)
 
 build-frontend:
-	gcloud builds submit --config=build-frontend.yaml
+	gcloud builds submit --config=build-frontend.yaml \
+		--substitutions=_PROJECT_ID=$(GCP_PROJECT),_REGION=$(REGION),_REGISTRY_NAME=$(REGISTRY_NAME)
 
-build-all: build-mcp build-agent build-backend build-frontend
+# Build & push all images to Artifact Registry using Cloud Build
+build-all:
+	gcloud builds submit --config=cloudbuild.yaml \
+		--substitutions=_PROJECT_ID=$(GCP_PROJECT),_REGION=$(REGION),_REGISTRY_NAME=$(REGISTRY_NAME)
 
 # ==========================================================================
 # Deployment Targets (Cloud Run)

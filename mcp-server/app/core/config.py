@@ -17,9 +17,9 @@ class Config(BaseSettings):
     # ==========================================
     # Embeddings (semantic search in pytriz)
     # ==========================================
-    EMBEDDING_MODEL: str = "embeddinggemma:300m"
-    EMBEDDING_SERVICE_URL: str = "http://localhost:11434/v1"
-    EMBEDDING_API_KEY: str = "ollama"
+    EMBEDDING_MODEL: str = "none"
+    EMBEDDING_SERVICE_URL: str = ""
+    EMBEDDING_API_KEY: str = ""
 
 
 config = Config()

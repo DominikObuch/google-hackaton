@@ -1,14 +1,20 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build',
-        '-f',
-        'apps/api/Dockerfile',
-        '-t',
-        'europe-west1-docker.pkg.dev/lofty-advantage-501408-f9/buildwithai-repo/buildwithai-backend:latest',
-        '.',
-      ]
+    args: [
+      'build',
+      '-f', 'apps/api/Dockerfile',
+      '-t', '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REGISTRY_NAME}/buildwithai-backend:latest',
+      '.'
+    ]
     env: ['DOCKER_BUILDKIT=1']
+
 images:
-  - 'europe-west1-docker.pkg.dev/lofty-advantage-501408-f9/buildwithai-repo/buildwithai-backend:latest'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REGISTRY_NAME}/buildwithai-backend:latest'
+
+substitutions:
+  _PROJECT_ID: 'lofty-advantage-501408-f9'
+  _REGION: 'europe-west1'
+  _REGISTRY_NAME: 'buildwithai-repo'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
