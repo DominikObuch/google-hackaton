@@ -27,11 +27,14 @@ async def lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     yield AppContext(config=config, store=store)
 
 
+from mcp.server.transport_security import TransportSecuritySettings
+
 mcp = FastMCP(
     "TRIZ MCP Server",
     lifespan=lifespan,
     stateless_http=True,
     json_response=True,
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False)
 )
 
 # ---------------------------------------------------------------------------

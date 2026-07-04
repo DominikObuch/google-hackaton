@@ -8,7 +8,7 @@ from app.core.config import config
 @lru_cache(maxsize=1)
 def get_store() -> TRIZStore:
     embed_model = None
-    if config.EMBEDDING_MODEL:
+    if config.EMBEDDING_MODEL and config.EMBEDDING_MODEL.lower() not in ("none", "false", ""):
         embed_model = get_embedder(
             config.EMBEDDING_MODEL,
             base_url=config.EMBEDDING_SERVICE_URL,

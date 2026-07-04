@@ -21,6 +21,7 @@ import { DatabaseService } from './db.service';
         password: configService.get<string>('DB_PASSWORD') || 'postgres',
         database: configService.get<string>('DB_NAME') || 'nestDb',
         models: [],
+        autoLoadModels: true,
         synchronize: false,
       }),
     }),

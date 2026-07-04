@@ -1,20 +1,20 @@
 {
   "mcpServers": {
     "angular-cli": {
-      "command": "npx",
-      "args": ["ng", "mcp"]
+      "command": "/home/dlznski/Workspace/google-hackaton/node_modules/.bin/ng",
+      "args": ["mcp"]
     },
     "nx": {
-      "command": "npx",
-      "args": ["nx", "mcp"]
+      "command": "/home/dlznski/Workspace/google-hackaton/node_modules/.bin/nx",
+      "args": ["mcp"]
     },
     "qmd": {
-      "command": "npx",
-      "args": ["qmd", "mcp"]
+      "command": "/home/dlznski/Workspace/google-hackaton/node_modules/.bin/qmd",
+      "args": ["mcp"]
     },
     "ng-diagram": {
-      "command": "npx",
-      "args": ["ng-diagram-mcp"]
+      "command": "/home/dlznski/Workspace/google-hackaton/node_modules/.bin/ng-diagram-mcp",
+      "args": []
     },
     "postgres": {
       "command": "npx",
@@ -22,8 +22,11 @@
         "--yes",
         "--quiet",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:postgres@localhost:5432/nestDb"
+        "postgresql://postgres:postgres@localhost:5434/nestDb"
       ]
+    },
+    "triz-mcp-server-cloud": {
+      "url": "https://triz-mcp-server-763640779159.europe-west1.run.app/mcp"
     }
   }
 }

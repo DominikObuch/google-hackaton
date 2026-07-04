@@ -3,7 +3,7 @@
 # ==========================================================================
 
 # Configuration Variables (Participants should override these)
-GCP_PROJECT   ?= gdg-mcp-workshop-2026
+GCP_PROJECT   ?= lofty-advantage-501408-f9
 REGION        ?= europe-west1
 REGISTRY_NAME ?= buildwithai-repo
 DB_INSTANCE   ?= buildwithai-db

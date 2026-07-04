@@ -95,7 +95,7 @@ steps:
     id: 'push-frontend'
 
 substitutions:
-  _PROJECT_ID: 'gdg-mcp-workshop-2026'
+  _PROJECT_ID: 'lofty-advantage-501408-f9'
   _REGION: 'europe-west1'
   _REGISTRY_NAME: 'buildwithai-registry'
 
