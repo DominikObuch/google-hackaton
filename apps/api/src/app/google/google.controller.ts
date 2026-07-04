@@ -60,6 +60,16 @@ export class GoogleController {
     return this.googleService.checkConnection(body.apiKey);
   }
 
+  @Post('update-key')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update the global Gemini API Key dynamically' })
+  async updateKey(@Body() body: TestConnectionDto): Promise<{ success: boolean }> {
+    if (body.apiKey) {
+      this.googleService.updateApiKey(body.apiKey);
+    }
+    return { success: true };
+  }
+
   @Post('generate-solutions')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate TRIZ solutions using Gemini' })

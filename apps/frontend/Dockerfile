@@ -24,4 +24,4 @@ COPY --from=builder /usr/src/app/dist/apps/frontend/browser /usr/share/nginx/htm
 
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "if [ -n \"$BACKEND_URL\" ]; then sed -i \"s|http://localhost:3000|$BACKEND_URL|g\" /usr/share/nginx/html/config.json; fi && nginx -g 'daemon off;'"]

@@ -9,6 +9,8 @@ export class SolverService {
   private readonly logger = new Logger(SolverService.name);
   private ai: GoogleGenAI;
 
+  private currentApiKey?: string;
+
   constructor(
     private readonly configService: ConfigService,
     private readonly trizService: TrizService
@@ -16,24 +18,37 @@ export class SolverService {
     const apiKey = this.configService.get<string>('AI_STUDIO_API_KEY') || process.env.AI_STUDIO_API_KEY;
     if (!apiKey) {
       this.logger.warn('AI_STUDIO_API_KEY is not defined. Google GenAI calls will fail.');
+    } else {
+      this.currentApiKey = apiKey;
     }
-    this.ai = new GoogleGenAI({ apiKey });
+    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
   }
 
   private async delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private updateAiInstanceIfNeeded() {
+    const envKey = process.env['AI_STUDIO_API_KEY'] || this.configService.get<string>('AI_STUDIO_API_KEY');
+    if (envKey && envKey !== this.currentApiKey) {
+      this.logger.log('SolverService detected API key change. Re-initializing GoogleGenAI...');
+      this.ai = new GoogleGenAI({ apiKey: envKey });
+      this.currentApiKey = envKey;
+    }
+  }
+
   private async generateContentWithRetry(request: any): Promise<any> {
-    const maxRetries = 4;
+    this.updateAiInstanceIfNeeded();
+    const maxRetries = 6;
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await this.ai.models.generateContent(request);
       } catch (error: any) {
         const errorStr = String(error);
         if (errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED') || errorStr.includes('fetch failed')) {
-          const waitTime = (i + 1) * 8000;
-          this.logger.warn(`API error (${errorStr.includes('fetch failed') ? 'Network' : 'Rate Limit'}). Retrying in ${waitTime/1000}s... (Attempt ${i + 1}/${maxRetries})`);
+          const jitter = Math.floor(Math.random() * 3000); // 0-3s jitter
+          const waitTime = (i + 1) * 6000 + jitter;
+          this.logger.warn(`API error (${errorStr.includes('fetch failed') ? 'Network' : 'Rate Limit'}). Retrying in ${(waitTime/1000).toFixed(1)}s... (Attempt ${i + 1}/${maxRetries})`);
           await this.delay(waitTime);
         } else {
           this.logger.error('Unhandled GenAI error:', error);

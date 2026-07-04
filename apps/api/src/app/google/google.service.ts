@@ -12,7 +12,15 @@ export class GoogleService {
    * Retrieves the API key from environment config if available.
    */
   getApiKeyFromEnv(): string | undefined {
-    return this.configService.get<string>('AI_STUDIO_API_KEY');
+    return process.env['AI_STUDIO_API_KEY'] || this.configService.get<string>('AI_STUDIO_API_KEY');
+  }
+
+  /**
+   * Dynamically updates the API key in memory
+   */
+  updateApiKey(key: string) {
+    process.env['AI_STUDIO_API_KEY'] = key;
+    this.logger.log('Global API Key updated dynamically in memory.');
   }
 
   /**

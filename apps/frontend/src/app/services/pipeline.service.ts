@@ -74,18 +74,19 @@ export class PipelineService {
       this.addLog('EXTRACT', `✓ Extracted: Improve [${contradiction.improvingFeature}] vs Worsen [${contradiction.worseningFeature}]`, 'success');
       await this.delay(800);
 
-      // Stage 3: Generating Candidates (Concurrent TRIZ, LCA, and 5 Whys)
+      // Stage 3: Generating Candidates (Sequential to respect API rate limits)
       this.stage.set('generating_candidates');
-      this.addLog('GENERATE', `Starting parallel TRIZ matrix lookup, LCA Deep Research, and 5 Whys deduction...`, 'info');
+      this.addLog('GENERATE', `Starting TRIZ matrix lookup, LCA Deep Research, and 5 Whys deduction (sequentially)...`, 'info');
       
-      const [trizResult, lcaResult, fiveWhysResult] = await Promise.all([
-        firstValueFrom(this.solverHttp.generateTrizCandidates(request.problemDescription, contradiction)),
-        firstValueFrom(this.solverHttp.generateLcaCandidates(request.problemDescription)),
-        firstValueFrom(this.solverHttp.generate5WhysCandidates(request.problemDescription))
-      ]);
-      
+      const trizResult = await firstValueFrom(this.solverHttp.generateTrizCandidates(request.problemDescription, contradiction));
       this.trizCandidates.set(trizResult);
+      this.addLog('GENERATE', `✓ Generated ${trizResult.length} TRIZ candidates`, 'info');
+
+      const lcaResult = await firstValueFrom(this.solverHttp.generateLcaCandidates(request.problemDescription));
       this.lcaCandidates.set(lcaResult);
+      this.addLog('GENERATE', `✓ Generated ${lcaResult.length} LCA candidates`, 'info');
+
+      const fiveWhysResult = await firstValueFrom(this.solverHttp.generate5WhysCandidates(request.problemDescription));
       this.fiveWhysCandidates.set(fiveWhysResult);
       this.addLog('GENERATE', `✓ Generated ${trizResult.length} TRIZ, ${lcaResult.length} LCA, and ${fiveWhysResult.length} 5-Whys candidates`, 'success');
       await this.delay(1000);

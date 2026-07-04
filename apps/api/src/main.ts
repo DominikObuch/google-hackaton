@@ -32,8 +32,7 @@ async function bootstrap() {
   const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
 
   app.enableCors({
-    origin: frontendUrl,
-    credentials: true,
+    origin: '*',
   });
 
   await app.listen(port);

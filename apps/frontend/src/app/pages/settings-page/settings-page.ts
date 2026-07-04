@@ -161,6 +161,12 @@ import { AgBadge } from '../../components/ag-badge/ag-badge';
                 }
                 {{ testing() ? 'Validating...' : 'Validate Key' }}
               </button>
+              <button ag-button variant="primary" (click)="updateGlobalKey()" [disabled]="updating() || !customStatus().success" class="flex-1">
+                @if (updating()) {
+                  <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                }
+                {{ updating() ? 'Saving...' : 'Set as Active Key' }}
+              </button>
               <button ag-button variant="ghost" (click)="clearCustomTest()" [disabled]="testing() || (!customKey().trim() && !customStatus().error && !customStatus().success)">
                 Clear
               </button>
@@ -187,6 +193,7 @@ export class SettingsPage implements OnInit {
 
   checking = signal(false);
   testing = signal(false);
+  updating = signal(false);
   customKey = signal('');
 
   ngOnInit(): void {
@@ -230,6 +237,24 @@ export class SettingsPage implements OnInit {
         });
         this.testing.set(false);
       },
+    });
+  }
+
+  updateGlobalKey(): void {
+    const key = this.customKey().trim();
+    if (!key || !this.customStatus().success) return;
+
+    this.updating.set(true);
+    this.googleHttp.updateKey(key).subscribe({
+      next: () => {
+        this.updating.set(false);
+        this.customKey.set('');
+        this.customStatus.set({ success: false, configured: false });
+        this.checkLiveStatus(); // Refresh the environment status card
+      },
+      error: () => {
+        this.updating.set(false);
+      }
     });
   }
 

@@ -30,6 +30,13 @@ export class GoogleHttp {
   }
 
   /**
+   * Updates the global Google Gemini API key dynamically in the backend.
+   */
+  updateKey(apiKey: string): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.baseUrl}/update-key`, { apiKey });
+  }
+
+  /**
    * Generates TRIZ solutions using Gemini based on a problem description and extracted principles.
    */
   generateSolutions(problemDescription: string, principlesText: string): Observable<any[]> {
