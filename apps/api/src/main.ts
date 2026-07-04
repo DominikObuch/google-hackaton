@@ -5,6 +5,7 @@
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -27,8 +28,11 @@ async function bootstrap() {
   // Enable DTOs validation globally
   app.useGlobalPipes(new ValidationPipe());
 
+  const configService = app.get(ConfigService);
+  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
+
   app.enableCors({
-    origin: true,
+    origin: frontendUrl,
     credentials: true,
   });
 

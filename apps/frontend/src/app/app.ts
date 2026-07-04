@@ -55,6 +55,14 @@ import { CommonModule } from '@angular/common';
               Users Admin
             </a>
           </li>
+          <li>
+            <a routerLink="/settings"
+               routerLinkActive="bg-surface-container-high text-apple-blue border-apple-blue font-semibold"
+               class="flex items-center gap-3 px-4 py-2.5 text-text-secondary hover:bg-surface-container-high hover:text-text-primary transition-all rounded-lg font-body-md text-sm border border-transparent">
+              <span class="material-symbols-outlined text-[20px]">settings</span>
+              Settings
+            </a>
+          </li>
         </ul>
         
         <div class="mt-auto pt-6 border-t border-border flex flex-col gap-4">

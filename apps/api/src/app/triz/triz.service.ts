@@ -6,11 +6,10 @@ import axios from 'axios';
 export class TrizService {
   private readonly logger = new Logger(TrizService.name);
   private readonly mcpUrl: string;
-
-  constructor(configService: ConfigService) {
-    const host = configService.get<string>('MCP_HOST') || 'localhost';
-    const port = configService.get<string>('MCP_PORT') || '8123';
-    this.mcpUrl = `http://${host}:${port}/mcp`;
+  constructor(private configService: ConfigService) {
+    const host = this.configService.get<string>('MCP_HOST') || 'localhost';
+    const port = this.configService.get<string>('MCP_PORT') || '8123';
+    this.mcpUrl = this.configService.get<string>('MCP_SERVER_URL') || `http://${host}:${port}/mcp`;
   }
 
   private async callMcpTool(name: string, args: Record<string, unknown>): Promise<string> {

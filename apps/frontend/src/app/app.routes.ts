@@ -31,4 +31,9 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./pages/user-page/user-page').then((m) => m.UserPage),
   },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./pages/settings-page/settings-page').then((m) => m.SettingsPage),
+  },
 ];

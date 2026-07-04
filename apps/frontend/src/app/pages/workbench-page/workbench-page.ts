@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TrizHttp } from '@workspace/http';
+import { Router, RouterLink } from '@angular/router';
+import { TrizHttp, GoogleHttp } from '@workspace/http';
+import { PipelineService } from '../../services/pipeline.service';
 import { AgButton } from '../../components/ag-button/ag-button';
 import { AgCard } from '../../components/ag-card/ag-card';
 import { AgInput } from '../../components/ag-input/ag-input';
@@ -23,6 +25,7 @@ interface Candidate {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     AgButton,
     AgCard,
     AgInput,
@@ -45,8 +48,8 @@ interface Candidate {
             [buttonWidth]="180" />
         </div>
         
-        <div class="w-1/4 flex justify-end gap-4 text-[#636366]">
-          <button class="hover:text-white transition-colors"><span class="material-symbols-outlined">settings</span></button>
+        <div class="w-1/4 flex justify-end gap-4 text-[#636366] items-center">
+          <a routerLink="/settings" class="hover:text-white transition-colors flex items-center"><span class="material-symbols-outlined">settings</span></a>
           <button class="hover:text-white transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
         </div>
       </div>
@@ -161,6 +164,9 @@ interface Candidate {
 })
 export class WorkbenchPage {
   private readonly trizHttp = inject(TrizHttp);
+  private readonly googleHttp = inject(GoogleHttp);
+  private readonly router = inject(Router);
+  private readonly pipelineService = inject(PipelineService);
 
   activeMode = signal(0);
   problemDescription = signal('');
@@ -180,12 +186,12 @@ export class WorkbenchPage {
     { id: 8, name: 'Volume of stationary object' },
     { id: 9, name: 'Speed' },
     { id: 10, name: 'Force' },
-    { id: 11, name: 'Stress or pressure' },
+    { id: 11, name: 'Tension or pressure' },
     { id: 12, name: 'Shape' },
-    { id: 13, name: "Stability of the object's composition" },
+    { id: 13, name: 'Stability of object\'s composition' },
     { id: 14, name: 'Strength' },
-    { id: 15, name: 'Duration of action by a moving object' },
-    { id: 16, name: 'Duration of action by a stationary object' },
+    { id: 15, name: 'Durability of moving object' },
+    { id: 16, name: 'Durability of stationary object' },
     { id: 17, name: 'Temperature' },
     { id: 18, name: 'Illumination intensity' },
     { id: 19, name: 'Use of energy by moving object' },
@@ -195,20 +201,20 @@ export class WorkbenchPage {
     { id: 23, name: 'Loss of substance' },
     { id: 24, name: 'Loss of information' },
     { id: 25, name: 'Loss of time' },
-    { id: 26, name: 'Quantity of substance/the matter' },
+    { id: 26, name: 'Quantity of substance/matter' },
     { id: 27, name: 'Reliability' },
     { id: 28, name: 'Measurement accuracy' },
     { id: 29, name: 'Manufacturing precision' },
-    { id: 30, name: 'External harm affects the object' },
+    { id: 30, name: 'Object-affected harmful factors' },
     { id: 31, name: 'Object-generated harmful factors' },
-    { id: 32, name: 'Ease of manufacture' },
+    { id: 32, name: 'Manufacturability' },
     { id: 33, name: 'Ease of operation' },
     { id: 34, name: 'Ease of repair' },
     { id: 35, name: 'Adaptability or versatility' },
     { id: 36, name: 'Device complexity' },
-    { id: 37, name: 'Difficulty of detecting and measuring' },
+    { id: 37, name: 'Difficulty of detecting/measuring' },
     { id: 38, name: 'Extent of automation' },
-    { id: 39, name: 'Productivity' },
+    { id: 39, name: 'Productivity' }
   ];
 
   candidates = signal<Candidate[]>([
@@ -239,16 +245,18 @@ export class WorkbenchPage {
   ]);
 
   generateSolutions() {
-    this.loading.set(true);
-    this.trizHttp.browseMatrix([this.improvingParam], [this.preservingParam]).subscribe({
-      next: (res) => {
-        this.principlesText.set(res.result);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.principlesText.set('Error querying contradiction matrix from the Python FastMCP server.');
-        this.loading.set(false);
-      }
+    if (!this.problemDescription()) {
+      alert('Please enter a problem description first.');
+      return;
+    }
+
+    // Start the pipeline and navigate to topology for live view
+    this.pipelineService.startPipeline({
+      problemDescription: this.problemDescription(),
+      improvingParam: this.improvingParam,
+      preservingParam: this.preservingParam,
     });
+
+    this.router.navigate(['/topology']);
   }
 }

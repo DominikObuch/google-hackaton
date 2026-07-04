@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Type, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, input, signal, inject, effect, Injector, runInInjectionContext, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   initializeModel,
@@ -7,24 +7,53 @@ import {
   NgDiagramPortComponent,
   NgDiagramBaseEdgeComponent,
   NgDiagramEdgeTemplate,
+  NgDiagramNodeTemplateMap,
+  NgDiagramEdgeTemplateMap,
   SimpleNode,
   Edge,
   provideNgDiagram
 } from 'ng-diagram';
-import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segmented-toggle';
+import { HttpClient } from '@angular/common/http';
+import { PipelineService, PipelineStage } from '../../services/pipeline.service';
+
+/* ---------------------------------------------------------------------------
+ * Pipeline stage ordering for comparison
+ * --------------------------------------------------------------------------- */
+const STAGE_ORDER: PipelineStage[] = ['idle', 'prompt', 'triz', 'gemini', 'arena', 'done'];
+
+function stageIndex(stage: PipelineStage): number {
+  return STAGE_ORDER.indexOf(stage);
+}
+
+/* Node-to-stage mapping */
+const NODE_STAGE_MAP: Record<string, PipelineStage> = {
+  'prompt': 'prompt',
+  'triz': 'triz',
+  'gemini': 'gemini',
+  'arena': 'arena',
+  'results': 'done',
+};
+
+/* Edge-to-stage mapping (edge becomes active when target stage starts) */
+const EDGE_TARGET_STAGE: Record<string, PipelineStage> = {
+  'link-prompt-triz': 'triz',
+  'link-triz-gemini': 'gemini',
+  'link-gemini-arena': 'arena',
+  'link-arena-results': 'done',
+};
 
 interface GiggsNodeData {
   label: string;
   icon: string;
   description: string;
-  status: 'healthy' | 'winner' | 'error';
+  status: 'idle' | 'processing' | 'healthy' | 'winner' | 'error';
   metric: string;
   metricColor?: string;
   ownerImage?: string;
 }
 
 interface GiggsEdgeData {
-  status?: 'active' | 'error' | 'default';
+  status?: 'active' | 'done' | 'error' | 'default';
 }
 
 /* ---------------------------------------------------------------------------
@@ -33,11 +62,13 @@ interface GiggsEdgeData {
 @Component({
   selector: 'app-giggs-node',
   imports: [CommonModule, NgDiagramPortComponent],
+  host: { style: 'display: block;' },
   template: `
-    <div class="relative bg-[#2C2C2E]/90 border rounded-xl p-4 w-[240px] flex flex-col gap-3 transition-all duration-200 hover:border-[#636366] text-white shadow-xl"
+    <div class="relative bg-[#2C2C2E]/90 border rounded-xl p-4 w-[240px] flex flex-col gap-3 transition-all duration-500 text-white shadow-xl"
          [ngClass]="{
-           'border-[#38383A]': node().data.status === 'healthy',
-           'border-[#30D158] shadow-[inset_0_0_0_1px_#30D158]': node().data.status === 'winner',
+           'border-[#38383A]': node().data.status === 'idle',
+           'border-[#0A84FF] shadow-[inset_0_0_0_1px_#0A84FF,0_0_20px_rgba(10,132,255,0.15)]': node().data.status === 'processing',
+           'border-[#30D158] shadow-[inset_0_0_0_1px_#30D158]': node().data.status === 'healthy',
            'border-[#FF453A] shadow-[inset_0_0_0_1px_#FF453A]': node().data.status === 'error'
          }">
       
@@ -51,28 +82,35 @@ interface GiggsEdgeData {
           <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
         </div>
       }
-
       <div class="flex justify-between items-start">
         <div class="flex items-center gap-2 text-white">
-          <span class="material-symbols-outlined text-[#8E8E93] text-[20px]">{{ node().data.icon }}</span>
+          <span class="material-symbols-outlined text-[20px] transition-colors duration-500"
+                [ngClass]="{
+                  'text-[#8E8E93]': node().data.status === 'idle',
+                  'text-[#0A84FF]': node().data.status === 'processing',
+                  'text-[#30D158]': node().data.status === 'healthy',
+                  'text-[#FF453A]': node().data.status === 'error'
+                }">{{ node().data.icon }}</span>
           <span class="font-headline-sm text-sm font-semibold">{{ node().data.label }}</span>
         </div>
-        <div class="w-2 h-2 rounded-full"
+        <div class="w-2 h-2 rounded-full transition-colors duration-500"
              [ngClass]="{
-               'bg-[#30D158]': node().data.status !== 'error',
+               'bg-[#636366]': node().data.status === 'idle',
+               'bg-[#0A84FF] animate-pulse': node().data.status === 'processing',
+               'bg-[#30D158]': node().data.status === 'healthy',
                'bg-[#FF453A] animate-pulse': node().data.status === 'error'
              }"></div>
       </div>
       
       <p class="font-caption text-xs text-[#8E8E93] leading-relaxed">{{ node().data.description }}</p>
       
-      <div class="mt-2 flex justify-between items-center pt-3 border-t border-[#38383A]/50">
-        <div class="font-label-mono text-[10px] px-2 py-0.5 rounded font-mono"
+      <div class="mt-auto flex justify-between items-center pt-3 border-t border-[#38383A]/50">
+        <div class="font-label-mono text-[10px] px-2 py-0.5 rounded font-mono transition-colors duration-500"
              [ngClass]="{
-               'text-[#0A84FF] bg-[#0A84FF]/10': node().data.status === 'healthy' && node().data.metricColor === 'blue',
-               'text-[#30D158] bg-[#30D158]/10': node().data.status === 'winner',
-               'text-[#FF453A] bg-[#FF453A]/10': node().data.status === 'error',
-               'text-[#8E8E93] bg-[#2C2C2E]': !node().data.metricColor
+               'text-[#636366] bg-[#2C2C2E]': node().data.status === 'idle',
+               'text-[#0A84FF] bg-[#0A84FF]/10': node().data.status === 'processing',
+               'text-[#30D158] bg-[#30D158]/10': node().data.status === 'healthy',
+               'text-[#FF453A] bg-[#FF453A]/10': node().data.status === 'error'
              }">
           {{ node().data.metric }}
         </div>
@@ -108,20 +146,20 @@ export class CustomEdgeComponent implements NgDiagramEdgeTemplate<GiggsEdgeData>
   getStrokeColor() {
     const status = this.edge().data?.status;
     if (status === 'active') return '#0A84FF';
+    if (status === 'done') return '#30D158';
     if (status === 'error') return '#FF453A';
     return '#38383A';
   }
 
   getStrokeWidth() {
     const status = this.edge().data?.status;
-    if (status === 'active') return 3;
-    if (status === 'error') return 3;
-    return 2.5;
+    if (status === 'active' || status === 'done') return 3;
+    return 2;
   }
 
   getStrokeDasharray() {
     const status = this.edge().data?.status;
-    if (status === 'active') return '6 6';
+    if (status === 'active') return '8 4';
     return undefined;
   }
 }
@@ -134,70 +172,90 @@ export class CustomEdgeComponent implements NgDiagramEdgeTemplate<GiggsEdgeData>
   imports: [
     CommonModule,
     NgDiagramComponent,
-    AgSegmentedToggle,
   ],
   providers: [provideNgDiagram()],
   template: `
-    <header class="mb-8 flex justify-between items-end px-10 pt-6">
+    <header class="mb-6 flex justify-between items-end px-10 pt-6">
       <div>
-        <h1 class="font-display-lg text-2xl font-bold text-white mb-2">System Topology</h1>
-        <p class="text-sm text-[#8E8E93]">Live architectural view of the E-Waste processing pipeline.</p>
+        <h1 class="font-display-lg text-2xl font-bold text-white mb-1">Pipeline Topology</h1>
+        <p class="text-sm text-[#8E8E93]">Live view of the TRIZ evaluation pipeline.</p>
       </div>
       
-      <ag-segmented-toggle
-        [options]="['Topology', 'Team View']"
-        [selectedIndex]="selectedView()"
-        (selectionChange)="selectedView.set($event)"
-        [buttonWidth]="120" />
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-mono px-3 py-1.5 rounded-full border transition-colors duration-300"
+              [ngClass]="{
+                'text-[#636366] border-[#38383A]': pipeline.stage() === 'idle',
+                'text-[#0A84FF] border-[#0A84FF] bg-[#0A84FF]/10': pipeline.isRunning(),
+                'text-[#30D158] border-[#30D158] bg-[#30D158]/10': pipeline.stage() === 'done',
+                'text-[#FF453A] border-[#FF453A] bg-[#FF453A]/10': pipeline.stage() === 'error'
+              }">
+          {{ pipeline.stage() === 'idle' ? 'AWAITING INPUT' : pipeline.stage() === 'done' ? 'COMPLETE' : pipeline.stage() === 'error' ? 'ERROR' : 'RUNNING: ' + pipeline.stage().toUpperCase() }}
+        </span>
+      </div>
     </header>
 
-    <main class="flex-1 px-10 pb-10">
+    <main class="flex-1 px-10 pb-6 flex flex-col gap-4">
       <!-- Diagram Canvas -->
-      <div class="relative w-full bg-[#131315] border border-[#38383A] rounded-xl overflow-hidden min-h-[600px] flex">
-        <ng-diagram
-          [model]="model"
-          [nodeTemplateMap]="nodeTemplates"
-          [edgeTemplateMap]="edgeTemplates"
-          class="w-full h-[600px]"
-        />
-        
-        <!-- Live Details Overlay -->
-        <div class="absolute bottom-8 right-8 w-[320px] bg-[#2C2C2E] border border-[#38383A] rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.4)] p-5 z-50">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="font-headline-sm text-sm font-semibold text-white">Giggs Live Health</h3>
-            <button class="text-[#636366] hover:text-white"><span class="material-symbols-outlined text-sm">close</span></button>
+      <div class="relative w-full bg-[#131315] border border-[#38383A] rounded-xl overflow-hidden">
+        <div class="diagram-container">
+          <ng-diagram
+            [model]="model()"
+            [nodeTemplateMap]="nodeTemplates"
+            [edgeTemplateMap]="edgeTemplates"
+          />
+        </div>
+      </div>
+      
+      <!-- Log Panel -->
+      <div class="bg-[#1C1C1E] border border-[#38383A] rounded-xl overflow-hidden flex flex-col" style="height: 220px;">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#38383A] shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#636366] text-sm">terminal</span>
+            <span class="font-headline-sm text-xs font-semibold text-[#8E8E93]">Pipeline Execution Log</span>
           </div>
-          <div class="space-y-4">
-            <div>
-              <div class="flex justify-between text-xs font-mono mb-1">
-                <span class="text-[#8E8E93]">Overall Efficiency</span>
-                <span class="text-[#30D158]">94%</span>
-              </div>
-              <div class="h-1.5 w-full bg-[#131315] rounded-full overflow-hidden">
-                <div class="h-full bg-[#30D158] w-[94%]"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between text-xs font-mono mb-1">
-                <span class="text-[#8E8E93]">Cache Memory Pressure</span>
-                <span class="text-[#FF453A]">99%</span>
-              </div>
-              <div class="h-1.5 w-full bg-[#131315] rounded-full overflow-hidden">
-                <div class="h-full bg-[#FF453A] w-[99%]"></div>
-              </div>
-            </div>
-          </div>
-          <button class="w-full mt-6 bg-transparent border border-[#38383A] text-white font-body-md text-xs py-2 rounded-lg hover:bg-[#353437] transition-colors">
-            View Live Logs
+          <button *ngIf="pipeline.logs().length > 0" 
+                  (click)="pipeline.reset()" 
+                  class="text-[10px] text-[#636366] hover:text-white px-2 py-0.5 rounded border border-[#38383A] hover:border-[#636366] transition-colors">
+            Clear
           </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-2 font-mono text-xs leading-6" #logContainer>
+          <div *ngIf="pipeline.logs().length === 0" class="text-[#636366] italic py-4">
+            Waiting for pipeline execution... Submit a prompt from the Workbench to begin.
+          </div>
+          <div *ngFor="let log of pipeline.logs()" class="flex gap-3">
+            <span class="text-[#636366] shrink-0">{{ log.timestamp }}</span>
+            <span class="shrink-0 w-[70px]"
+                  [ngClass]="{
+                    'text-[#8E8E93]': log.type === 'info',
+                    'text-[#30D158]': log.type === 'success',
+                    'text-[#FF453A]': log.type === 'error'
+                  }">[{{ log.stage }}]</span>
+            <span [ngClass]="{
+                    'text-[#E5E5EA]': log.type === 'info',
+                    'text-[#30D158]': log.type === 'success',
+                    'text-[#FF453A]': log.type === 'error'
+                  }">{{ log.message }}</span>
+          </div>
         </div>
       </div>
     </main>
   `,
+  styles: [`
+    .diagram-container {
+      display: flex;
+      height: 420px;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopologyPage {
-  selectedView = signal(0);
+  private http = inject(HttpClient);
+  private injector = inject(Injector);
+  pipeline = inject(PipelineService);
+  
+  private baseNodes = signal<any[]>([]);
+  private baseEdges = signal<any[]>([]);
 
   nodeTemplates = new Map<string, Type<NgDiagramNodeTemplate<GiggsNodeData>>>([
     ['giggsNode', GiggsNodeComponent]
@@ -207,141 +265,89 @@ export class TopologyPage {
     ['custom', CustomEdgeComponent]
   ]);
 
-  model = initializeModel({
-    nodes: [
-      {
-        id: 'node-ingest-1',
-        type: 'giggsNode',
-        position: { x: 50, y: 50 },
-        data: {
-          label: 'IoT Aggregator',
-          icon: 'sensors',
-          description: 'Edge collection from sorting facilities.',
-          status: 'healthy',
-          metric: 'CPU: 12%',
-          metricColor: 'blue',
-          ownerImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBSxd57OVO6cp1VNQDmVarAn9NRzo-9m9cJqbbiBuqav4zFWhFDvkVorcWS_n7aCo9tx3cnN5R6V6X1aLm7x7qyxDy4BGxtr4f007NhngyMkOHvVUBXauXb2AbqRIzAq8wPkBszzpoaTdz002YitVMjXQTPkPYhKOuPTgtyR1yPF2fRB69lgkWn2Py4uV6GB1iW_7GTkrdJhoeu1zWeHwRv4_dZsw93Xe_lRuifcVjm3hmXgkxjtdkB5B1x_nBStpZbTtV5YzXWMX6R'
-        }
+  /** Reactive model updated via effect */
+  model = signal<any>(initializeModel({ nodes: [], edges: [] }));
+
+  constructor() {
+    // Fetch base topology layout from API
+    this.http.get<{nodes: any[], edges: any[]}>('topology').subscribe({
+      next: (data) => {
+        this.baseNodes.set(data.nodes);
+        this.baseEdges.set(data.edges);
       },
-      {
-        id: 'node-ingest-2',
-        type: 'giggsNode',
-        position: { x: 50, y: 350 },
-        data: {
-          label: 'Partner API Gateway',
-          icon: 'api',
-          description: 'External data ingestion from logistics.',
-          status: 'healthy',
-          metric: 'REQ: 1.2k/s',
-          ownerImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRc6ACOD2EZ-n_fEmtgclk89HvP6ShW4nCZEml2EbZ4eaWNxXowt8kLcOJ4bpK21NFWdAfH5lnTvArXsC24uJrMUwgHadSTRxvuDtw__VayVOlNVtDb82yjeQl0R1yWuQqQZCPSRWCBfjJXucdvm8ak0DWiJ0wRUHXUdmgP9_3lw37y7Z3RGTPJZFj72DhZld_Hm99T7eQB4Bqs19PL_MBchU0QsLqTC4rbr26wwASY8BP5ntYBUjWZOG3PgMb9vnmjsO-V-pAExRQ'
-        }
-      },
-      {
-        id: 'node-process-1',
-        type: 'giggsNode',
-        position: { x: 380, y: 200 },
-        data: {
-          label: 'Material Classifier',
-          icon: 'psychology',
-          description: 'ML inference for rare-earth metal detection.',
-          status: 'winner',
-          metric: 'GPU: 94%',
-          ownerImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqquBhC4HX3KdhYSn2bL9-2v8c1YRVBszF1oiLRaPioLket-71hxcwUjF9l60AAD6fU-J-gb0G40p-AR6YtoFk48RNjmsQyzB2zSjMdMPK1Q93MpVTfQHiLXx-IeP7EJW2iG1a3vRgc4QB8O2MC1gN3dS81eemBdaAGJE5UQMAGwDSa7URX1ck0Fzfy0FrHSEWyTu1ZZiAzTicSk27kR1UFpFojWV0BuKOy0-lDB6eaBK7PFH_kJVeOpuFLeBhOJbG8EhGrx6VMizj'
-        }
-      },
-      {
-        id: 'node-store-1',
-        type: 'giggsNode',
-        position: { x: 710, y: 50 },
-        data: {
-          label: 'Primary Lakehouse',
-          icon: 'database',
-          description: 'Immutable ledger of extracted materials.',
-          status: 'healthy',
-          metric: 'IOPS: 4.5k'
-        }
-      },
-      {
-        id: 'node-store-2',
-        type: 'giggsNode',
-        position: { x: 710, y: 350 },
-        data: {
-          label: 'Analytics Cache',
-          icon: 'warning',
-          description: 'High memory pressure. Eviction rate > 80%.',
-          status: 'error',
-          metric: 'MEM: 99%',
-          ownerImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfPllS2gGoyHPcgIs4ggDmmlxixuANp6hp2rlqKB7sCt3LNHrNgXw_LPLQCbPQNW7WiRqSynWIpPurWz58NOsYFMJYd-KokXnCe0XK73JEKp7J_Ka-bN22bFCy-bG55EAJZtn038Je4werJ18OEjYtwNEajJM5X-l5OqLhdtTjvuOZOfpboSMtr9lp7BTI3Ziq6jkwqBh1SKNkmcdpshH6obEG8DWcaGZUrdbHtn8Vv8ZHyR3fv8bfTB1xar9eROu86HrBrSOwSSJZ'
-        }
-      },
-      {
-        id: 'node-deliver-1',
-        type: 'giggsNode',
-        position: { x: 1040, y: 200 },
-        data: {
-          label: 'Client Portal UI',
-          icon: 'dashboard',
-          description: 'Real-time recovery metrics dashboard.',
-          status: 'healthy',
-          metric: 'LAT: 45ms'
-        }
+      error: (err) => {
+        console.error('Failed to load topology', err);
       }
-    ],
-    edges: [
-      {
-        id: 'link-1',
-        type: 'custom',
-        source: 'node-ingest-1',
-        target: 'node-process-1',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'active' }
-      },
-      {
-        id: 'link-2',
-        type: 'custom',
-        source: 'node-ingest-2',
-        target: 'node-process-1',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'active' }
-      },
-      {
-        id: 'link-3',
-        type: 'custom',
-        source: 'node-process-1',
-        target: 'node-store-1',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'default' }
-      },
-      {
-        id: 'link-4',
-        type: 'custom',
-        source: 'node-process-1',
-        target: 'node-store-2',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'error' }
-      },
-      {
-        id: 'link-5',
-        type: 'custom',
-        source: 'node-store-1',
-        target: 'node-deliver-1',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'default' }
-      },
-      {
-        id: 'link-6',
-        type: 'custom',
-        source: 'node-store-2',
-        target: 'node-deliver-1',
-        sourcePort: 'port-right',
-        targetPort: 'port-left',
-        data: { status: 'default' }
-      }
-    ]
-  });
+    });
+
+    // Rebuild the diagram model whenever stage or base data changes
+    effect(() => {
+      const currentStage = this.pipeline.stage();
+      const currentIdx = stageIndex(currentStage);
+      const nodes = this.baseNodes();
+      const edges = this.baseEdges();
+      
+      if (nodes.length === 0) return;
+
+      // Update node statuses based on pipeline stage
+      const updatedNodes = nodes.map(node => {
+        const nodeStage = NODE_STAGE_MAP[node.id];
+        const nodeIdx = nodeStage ? stageIndex(nodeStage) : -1;
+        
+        let status = 'idle';
+        let metric = 'IDLE';
+        
+        if (currentStage === 'idle') {
+          status = 'idle';
+          metric = 'IDLE';
+        } else if (currentStage === 'error') {
+          if (nodeIdx < currentIdx) {
+            status = 'healthy';
+            metric = 'DONE';
+          } else if (nodeIdx === currentIdx) {
+            status = 'error';
+            metric = 'ERROR';
+          }
+        } else if (nodeIdx < currentIdx) {
+          status = 'healthy';
+          metric = 'DONE';
+        } else if (nodeIdx === currentIdx) {
+          status = 'processing';
+          metric = 'ACTIVE';
+        } else {
+          status = 'idle';
+          metric = 'PENDING';
+        }
+
+        return {
+          ...node,
+          size: { width: 240, height: 140 },
+          autoSize: false,
+          data: { ...node.data, status, metric }
+        };
+      });
+
+      // Update edge statuses
+      const updatedEdges = edges.map(edge => {
+        const edgeTargetStage = EDGE_TARGET_STAGE[edge.id];
+        const edgeTargetIdx = edgeTargetStage ? stageIndex(edgeTargetStage) : -1;
+        
+        let status = 'default';
+        if (currentStage !== 'idle') {
+          if (edgeTargetIdx < currentIdx) {
+            status = 'done';
+          } else if (edgeTargetIdx === currentIdx) {
+            status = 'active';
+          }
+        }
+
+        return { ...edge, data: { ...edge.data, status } };
+      });
+
+      // initializeModel requires an injection context
+      runInInjectionContext(this.injector, () => {
+        this.model.set(initializeModel({ nodes: updatedNodes, edges: updatedEdges }));
+      });
+    });
+  }
 }

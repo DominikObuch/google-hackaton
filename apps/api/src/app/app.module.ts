@@ -5,6 +5,9 @@ import { UserModule } from './user/user.module';
 import { OrderModule } from './order/order.module';
 import { DatabaseService } from './db.service';
 import { TrizModule } from './triz/triz.module';
+import { GoogleModule } from './google/google.module';
+import { TopologyModule } from './topology/topology.module';
+import { ArenaModule } from './arena/arena.module';
 
 @Module({
   imports: [
@@ -12,6 +15,9 @@ import { TrizModule } from './triz/triz.module';
     UserModule,
     OrderModule,
     TrizModule,
+    GoogleModule,
+    TopologyModule,
+    ArenaModule,
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
