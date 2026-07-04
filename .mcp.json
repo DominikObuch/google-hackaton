@@ -18,9 +18,10 @@
     },
     "postgres": {
       "command": "npx",
-      "args": ["--yes", "--quiet", "@modelcontextprotocol/server-postgres", "postgresql://postgres:postgres@localhost:5432/nestDb"]
+      "args": ["--yes", "--quiet", "@modelcontextprotocol/server-postgres", "postgresql://postgres:postgres@localhost:5434/nestDb"]
     },
     "triz-mcp-server": {
+      "type": "http",
       "url": "http://localhost:8123/mcp"
     }
   }
