@@ -35,7 +35,6 @@ Przed przystąpieniem do pracy agent MUSI operować następującymi pojęciami:
 
 Pipeline składa się z **6 obligatoryjnych kroków**. Agent MUSI przejść przez każdy z nich sekwencyjnie.
 
-```
 Krok 1: Przyjęcie opisu problemu
     ↓
 Krok 2: Ekstrakcja sprzeczności technicznych
@@ -46,7 +45,11 @@ Krok 4: Mapowanie na 39 parametrów inżynieryjnych
     ↓
 Krok 5: Odpytanie macierzy sprzeczności → Zasady Wynalazcze
     ↓
-Krok 6: Generowanie konkretnych rozwiązań
+Krok 6: Generowanie konkretnych rozwiązań (TRIZ + LCA)
+    ↓
+Krok 7: Deep Research i pozyskiwanie literatury naukowej
+    ↓
+Krok 8: Ewaluacja końcowa i wybór zwycięzcy
 ```
 
 ---
@@ -169,40 +172,47 @@ Znaleziono X Zasad Wynalazczych dla sprzeczności:
 
 ---
 
-### Krok 6: Generowanie Konkretnych Rozwiązań
+### Krok 6: Generowanie Konkretnych Rozwiązań (Ścieżka Hybrydowa: TRIZ + LCA)
 
-**Cel:** Przełożenie abstrakcyjnych Zasad Wynalazczych na konkretne, realistyczne rozwiązania dostosowane do domeny użytkownika.
+**Cel:** Przełożenie abstrakcyjnych Zasad Wynalazczych (TRIZ) oraz zasad Zrównoważonego Rozwoju (LCA) na konkretne rozwiązania.
 
-**Reguły generowania:**
-- Dla KAŻDEJ znalezionej Zasady Wynalazczej wygeneruj osobne rozwiązanie.
-- Rozwiązanie MUSI wyraźnie odwoływać się do nazwy Zasady.
-- Rozwiązanie MUSI być dostosowane do opisanego przez użytkownika systemu technicznego, stosu technologicznego lub ograniczeń.
-- Długość opisu rozwiązania: ~80–150 słów.
-- Rozwiązanie MUSI być innowacyjne i niebędące oczywistą pochodną problemu.
+**Reguły generowania (TRIZ):**
+- Dla KAŻDEJ wybranej Zasady Wynalazczej wygeneruj osobne rozwiązanie.
+- Rozwiązanie MUSI wyraźnie odwoływać się do nazwy Zasady i tłumaczyć jej zastosowanie.
+
+**Reguły generowania (LCA - Life Cycle Assessment):**
+- System MUSI wygenerować oddzielny zestaw rozwiązań oparty wyłącznie na pryzmacie ekologii, gospodarki obiegu zamkniętego (Circular Economy) i śladu węglowego.
+- Użyj dostępnych narzędzi wyszukiwania (Google Search), aby oprzeć się na rzeczywistych współczesnych trendach dla danego materiału/problemu.
+
+---
+
+### Krok 7: Deep Research i Literatura Naukowa
+
+**Cel:** Znalezienie dowodów, artykułów naukowych lub rzeczywistych case studies wspierających wygenerowane rozwiązania.
+
+**Działania agenta:**
+1. Dla każdego wygenerowanego kandydata (zarówno TRIZ, jak i LCA), użyj narzędzia wyszukiwania w sieci.
+2. Znajdź prawdziwe publikacje naukowe, raporty R&D lub artykuły.
+3. Przypisz znalezione publikacje (Tytuł, URL, podsumowanie) do konkretnego kandydata w strukturze JSON (`scientificPapers`).
+
+---
+
+### Krok 8: Ewaluacja i Wybór Zwycięzcy
+
+**Cel:** Ustrukturyzowana inżynieryjna ocena każdego z wygenerowanych kandydatów.
+
+**Działania agenta:**
+1. Każdy kandydat (TRIZ i LCA) podlega rygorystycznej punktacji (w skali 1-10) według następujących kryteriów (lub pochodnych):
+   - **Wykonalność (Feasibility)**
+   - **Zrównoważony rozwój (Sustainability)**
+   - **Koszt (Cost)**
+   - **Wpływ / Skalowalność (Impact)**
+2. Główny inżynier (Agent) musi podsumować globalny wynik i ustawić flagę `isWinner: true` WYŁĄCZNIE dla jednego, najlepszego rozwiązania.
+3. Uzasadnienie musi znajdować się w końcowym polu tekstowym, dlaczego wybrano akurat tę koncepcję.
 
 **Format wyjścia dla całego rozwiązania:**
 
-```markdown
-## Wynik Analizy TRIZ
-
-### Sprzeczność Techniczna
-- **Działanie:** <action>
-- **Poprawiany efekt (EP1):** <positive_effect>
-- **Pogarszany efekt (EP2):** <negative_effect>
-
-### Wybrane Parametry TRIZ
-- **Improving:** #<ID> — <Nazwa parametru>
-- **Preserving:** #<ID> — <Nazwa parametru>
-
-### Znalezione Zasady Wynalazcze
-
-#### Zasada #<ID>: <Nazwa>
-**Proponowane rozwiązanie:**
-<Konkretny opis rozwiązania odwołujący się do zasady, ~80–150 słów>
-
-#### Zasada #<ID>: <Nazwa>
-...
-```
+System musi zwrócić obiekt JSON reprezentujący tzw. `ReasoningTrail`. Struktura powinna łączyć oryginalny problem, znalezioną sprzeczność oraz ujednoliconą tablicę kandydatów (`UnifiedCandidate`), w której każdy zawiera własne oceny punktowe, referencje literaturowe (`scientificPapers`) oraz przypisane reguły.
 
 ---
 
