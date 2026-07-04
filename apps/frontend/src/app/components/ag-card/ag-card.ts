@@ -12,9 +12,11 @@ import { CommonModule } from '@angular/common';
            'hover:border-[#636366] cursor-pointer': interactive
          }">
       <!-- Star Icon overlay for winner -->
-      <div *ngIf="winner" class="absolute top-4 right-4 bg-[#30D158]/20 text-[#30D158] rounded-full p-1.5 flex items-center justify-center">
-        <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1; font-size: 16px;">star</span>
-      </div>
+      @if (winner) {
+        <div class="absolute top-4 right-4 bg-[#30D158]/20 text-[#30D158] rounded-full p-1.5 flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1; font-size: 16px;">star</span>
+        </div>
+      }
       <ng-content></ng-content>
     </div>
   `

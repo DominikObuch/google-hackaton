@@ -38,16 +38,18 @@ interface Metric {
           <p class="text-xs text-[#8E8E93] leading-relaxed">Uses specialized bacteria (Acidithiobacillus) in mild acid solutions to dissolve and isolate rare earth elements from shredded PCBs.</p>
           
           <div class="space-y-3 mt-2 border-t border-[#38383A] pt-4">
-            <div *ngFor="let m of metrics" class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-mono">
-                <span class="text-[#8E8E93]">{{ m.label }}</span>
-                <span class="text-white">{{ getScore('A', m.name) }}/10</span>
+            @for (m of metrics; track m.name) {
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-[#8E8E93]">{{ m.label }}</span>
+                  <span class="text-white">{{ getScore('A', m.name) }}/10</span>
+                </div>
+                <input type="range" min="1" max="10" step="1"
+                       [ngModel]="getScore('A', m.name)"
+                       (ngModelChange)="setScore('A', m.name, $event)"
+                       class="w-full h-1 bg-[#1C1C1E] rounded-lg appearance-none cursor-pointer accent-[#0A84FF]" />
               </div>
-              <input type="range" min="1" max="10" step="1"
-                     [ngModel]="getScore('A', m.name)"
-                     (ngModelChange)="setScore('A', m.name, $event)"
-                     class="w-full h-1 bg-[#1C1C1E] rounded-lg appearance-none cursor-pointer accent-[#0A84FF]" />
-            </div>
+            }
           </div>
         </ag-card>
 
@@ -58,18 +60,20 @@ interface Metric {
             <ag-badge theme="success">Winner</ag-badge>
           </div>
           <p class="text-xs text-[#8E8E93] leading-relaxed">Electro-Active Debonding Adhesives releasing via 12V DC current within 10 seconds. Highly clean separation.</p>
-          
+
           <div class="space-y-3 mt-2 border-t border-[#38383A] pt-4">
-            <div *ngFor="let m of metrics" class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-mono">
-                <span class="text-[#8E8E93]">{{ m.label }}</span>
-                <span class="text-white">{{ getScore('B', m.name) }}/10</span>
+            @for (m of metrics; track m.name) {
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-[#8E8E93]">{{ m.label }}</span>
+                  <span class="text-white">{{ getScore('B', m.name) }}/10</span>
+                </div>
+                <input type="range" min="1" max="10" step="1"
+                       [ngModel]="getScore('B', m.name)"
+                       (ngModelChange)="setScore('B', m.name, $event)"
+                       class="w-full h-1 bg-[#1C1C1E] rounded-lg appearance-none cursor-pointer accent-[#30D158]" />
               </div>
-              <input type="range" min="1" max="10" step="1"
-                     [ngModel]="getScore('B', m.name)"
-                     (ngModelChange)="setScore('B', m.name, $event)"
-                     class="w-full h-1 bg-[#1C1C1E] rounded-lg appearance-none cursor-pointer accent-[#30D158]" />
-            </div>
+            }
           </div>
         </ag-card>
       </div>
@@ -91,14 +95,18 @@ interface Metric {
               <circle cx="100" cy="100" r="20" class="radar-grid" />
               
               <!-- Axes Lines -->
-              <line *ngFor="let coord of axisCoords()" x1="100" y1="100" [attr.x2]="coord.x" [attr.y2]="coord.y" class="radar-line" />
-              
+              @for (coord of axisCoords(); track $index) {
+                <line x1="100" y1="100" [attr.x2]="coord.x" [attr.y2]="coord.y" class="radar-line" />
+              }
+
               <!-- Axis Label Names -->
-              <text *ngFor="let coord of labelCoords()" [attr.x]="coord.x" [attr.y]="coord.y"
-                    class="fill-[#8E8E93] text-[6px] font-semibold text-center font-sans"
-                    dominant-baseline="middle" text-anchor="middle">
-                {{ coord.label }}
-              </text>
+              @for (coord of labelCoords(); track coord.label) {
+                <text [attr.x]="coord.x" [attr.y]="coord.y"
+                      class="fill-[#8E8E93] text-[6px] font-semibold text-center font-sans"
+                      dominant-baseline="middle" text-anchor="middle">
+                  {{ coord.label }}
+                </text>
+              }
               
               <!-- Candidate A Area Polygon (Blue) -->
               <polygon [attr.points]="polyPointsA()" class="candidate-a" />

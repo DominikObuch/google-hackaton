@@ -14,45 +14,53 @@ import { CommonModule } from '@angular/common';
   ],
   template: `
     <div class="flex flex-col gap-2 w-full">
-      <label *ngIf="label" class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">{{ label }}</label>
+      @if (label) {
+        <label [attr.for]="inputId" class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">{{ label }}</label>
+      }
       <div class="bg-[#2C2C2E] border border-[#38383A] rounded-lg p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] focus-within:border-[#0A84FF] transition-colors">
-        <textarea *ngIf="type === 'textarea'; else inputTemplate"
-                  [(ngModel)]="value"
-                  (ngModelChange)="onModelChange($event)"
-                  (blur)="onTouched()"
-                  [placeholder]="placeholder"
-                  [rows]="rows"
-                  class="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-white resize-none placeholder-[#636366] font-body-md text-sm p-0 m-0"></textarea>
-        <ng-template #inputTemplate>
-          <input [type]="type"
+        @if (type === 'textarea') {
+          <textarea [id]="inputId"
+                    [(ngModel)]="value"
+                    (ngModelChange)="onModelChange($event)"
+                    (blur)="onTouched()"
+                    [placeholder]="placeholder"
+                    [rows]="rows"
+                    class="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-white resize-none placeholder-[#636366] font-body-md text-sm p-0 m-0"></textarea>
+        } @else {
+          <input [id]="inputId"
+                 [type]="type"
                  [(ngModel)]="value"
                  (ngModelChange)="onModelChange($event)"
                  (blur)="onTouched()"
                  [placeholder]="placeholder"
                  class="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-white placeholder-[#636366] font-body-md text-sm p-0 m-0" />
-        </ng-template>
+        }
       </div>
     </div>
   `
 })
 export class AgInput implements ControlValueAccessor {
+  private static idCounter = 0;
+
   @Input() label = '';
   @Input() placeholder = '';
   @Input() type: 'text' | 'textarea' | 'password' | 'email' | 'number' = 'text';
   @Input() rows = 4;
 
+  readonly inputId = `ag-input-${AgInput.idCounter++}`;
+
   value = '';
 
-  onChange: any = () => {};
-  onTouched: any = () => {};
+  onChange: (value: string) => void = () => undefined;
+  onTouched: () => void = () => undefined;
 
   writeValue(val: string): void {
     this.value = val || '';
   }
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

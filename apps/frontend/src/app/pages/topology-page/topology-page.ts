@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   initializeModel,
@@ -12,6 +12,20 @@ import {
   provideNgDiagram
 } from 'ng-diagram';
 import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segmented-toggle';
+
+interface GiggsNodeData {
+  label: string;
+  icon: string;
+  description: string;
+  status: 'healthy' | 'winner' | 'error';
+  metric: string;
+  metricColor?: string;
+  ownerImage?: string;
+}
+
+interface GiggsEdgeData {
+  status?: 'active' | 'error' | 'default';
+}
 
 /* ---------------------------------------------------------------------------
  * Custom Node Template Component
@@ -32,9 +46,11 @@ import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segme
       <ng-diagram-port id="port-right" side="right" type="both" class="absolute -right-1 top-1/2 -translate-y-1/2" />
 
       <!-- Winner star icon -->
-      <div *ngIf="node().data.status === 'winner'" class="absolute -top-2 -right-2 bg-[#2C2C2E] border border-[#30D158] rounded-full p-1 text-[#30D158] flex items-center justify-center">
-        <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
-      </div>
+      @if (node().data.status === 'winner') {
+        <div class="absolute -top-2 -right-2 bg-[#2C2C2E] border border-[#30D158] rounded-full p-1 text-[#30D158] flex items-center justify-center">
+          <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
+        </div>
+      }
 
       <div class="flex justify-between items-start">
         <div class="flex items-center gap-2 text-white">
@@ -60,13 +76,15 @@ import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segme
              }">
           {{ node().data.metric }}
         </div>
-        <img *ngIf="node().data.ownerImage" [src]="node().data.ownerImage" class="w-6 h-6 rounded-full border border-[#38383A] object-cover" />
+        @if (node().data.ownerImage) {
+          <img [src]="node().data.ownerImage" [alt]="node().data.label + ' owner avatar'" class="w-6 h-6 rounded-full border border-[#38383A] object-cover" />
+        }
       </div>
     </div>
   `
 })
-export class GiggsNodeComponent implements NgDiagramNodeTemplate {
-  node = input.required<SimpleNode<any>>();
+export class GiggsNodeComponent implements NgDiagramNodeTemplate<GiggsNodeData> {
+  node = input.required<SimpleNode<GiggsNodeData>>();
 }
 
 /* ---------------------------------------------------------------------------
@@ -84,8 +102,8 @@ export class GiggsNodeComponent implements NgDiagramNodeTemplate {
     />
   `
 })
-export class CustomEdgeComponent implements NgDiagramEdgeTemplate {
-  edge = input.required<Edge<any>>();
+export class CustomEdgeComponent implements NgDiagramEdgeTemplate<GiggsEdgeData> {
+  edge = input.required<Edge<GiggsEdgeData>>();
 
   getStrokeColor() {
     const status = this.edge().data?.status;
@@ -181,11 +199,11 @@ export class CustomEdgeComponent implements NgDiagramEdgeTemplate {
 export class TopologyPage {
   selectedView = signal(0);
 
-  nodeTemplates = new Map<string, any>([
+  nodeTemplates = new Map<string, Type<NgDiagramNodeTemplate<GiggsNodeData>>>([
     ['giggsNode', GiggsNodeComponent]
   ]);
 
-  edgeTemplates = new Map<string, any>([
+  edgeTemplates = new Map<string, Type<NgDiagramEdgeTemplate<GiggsEdgeData>>>([
     ['custom', CustomEdgeComponent]
   ]);
 

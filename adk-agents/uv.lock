@@ -1233,6 +1233,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "google-adk" },
     { name = "mcp" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -1240,6 +1241,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.9.0" },
     { name = "google-adk", specifier = ">=2.0.0" },
     { name = "mcp", specifier = ">=1.2.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 
 [[package]]

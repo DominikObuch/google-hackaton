@@ -12,15 +12,16 @@ import { CommonModule } from '@angular/common';
            [style.transform]="'translateX(' + (selectedIndex * buttonWidth) + 'px)'"></div>
       
       <!-- Option Buttons -->
-      <button *ngFor="let option of options; let i = index"
-              (click)="selectOption(i)"
-              [style.width.px]="buttonWidth"
-              class="px-4 py-1.5 text-sm text-center z-10 transition-colors duration-150 outline-none focus:outline-none"
-              [class.text-white]="i === selectedIndex"
-              [class.text-[#8E8E93]]="i !== selectedIndex"
-              [class.hover:text-white]="i !== selectedIndex">
-        {{ option }}
-      </button>
+      @for (option of options; track option; let i = $index) {
+        <button (click)="selectOption(i)"
+                [style.width.px]="buttonWidth"
+                class="px-4 py-1.5 text-sm text-center z-10 transition-colors duration-150 outline-none focus:outline-none"
+                [class.text-white]="i === selectedIndex"
+                [class.text-[#8E8E93]]="i !== selectedIndex"
+                [class.hover:text-white]="i !== selectedIndex">
+          {{ option }}
+        </button>
+      }
     </div>
   `
 })

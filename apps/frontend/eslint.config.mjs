@@ -18,11 +18,18 @@ export default [
       ],
       '@angular-eslint/component-selector': [
         'error',
-        {
-          type: 'element',
-          prefix: 'app',
-          style: 'kebab-case',
-        },
+        [
+          {
+            type: 'element',
+            prefix: ['app', 'ag'],
+            style: 'kebab-case',
+          },
+          {
+            type: 'attribute',
+            prefix: ['app', 'ag'],
+            style: 'kebab-case',
+          },
+        ],
       ],
     },
   },

@@ -78,22 +78,26 @@ interface Candidate {
           
           <div class="flex flex-col gap-4 mt-2">
             <div class="flex flex-col gap-2">
-              <label class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">Feature to Improve</label>
-              <select [(ngModel)]="improvingParam" class="bg-[#1C1C1E] rounded-lg px-3 py-2.5 border border-[#38383A] text-sm text-white focus:outline-none focus:border-[#0A84FF] transition-colors w-full">
-                <option *ngFor="let p of parameters" [value]="p.id">#{{ p.id }}. {{ p.name }}</option>
+              <label for="improving-param" class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">Feature to Improve</label>
+              <select id="improving-param" [(ngModel)]="improvingParam" class="bg-[#1C1C1E] rounded-lg px-3 py-2.5 border border-[#38383A] text-sm text-white focus:outline-none focus:border-[#0A84FF] transition-colors w-full">
+                @for (p of parameters; track p.id) {
+                  <option [value]="p.id">#{{ p.id }}. {{ p.name }}</option>
+                }
               </select>
             </div>
-            
+
             <div class="flex justify-center -my-2 relative z-10">
               <div class="bg-[#2C2C2E] rounded-full p-1 border border-[#38383A]">
                 <span class="material-symbols-outlined text-[#0A84FF] text-base block">swap_vert</span>
               </div>
             </div>
-            
+
             <div class="flex flex-col gap-2">
-              <label class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">Undesired Trade-off</label>
-              <select [(ngModel)]="preservingParam" class="bg-[#1C1C1E] rounded-lg px-3 py-2.5 border border-[#38383A] text-sm text-white focus:outline-none focus:border-[#0A84FF] transition-colors w-full">
-                <option *ngFor="let p of parameters" [value]="p.id">#{{ p.id }}. {{ p.name }}</option>
+              <label for="preserving-param" class="font-caption text-xs text-[#8E8E93] uppercase tracking-wider">Undesired Trade-off</label>
+              <select id="preserving-param" [(ngModel)]="preservingParam" class="bg-[#1C1C1E] rounded-lg px-3 py-2.5 border border-[#38383A] text-sm text-white focus:outline-none focus:border-[#0A84FF] transition-colors w-full">
+                @for (p of parameters; track p.id) {
+                  <option [value]="p.id">#{{ p.id }}. {{ p.name }}</option>
+                }
               </select>
             </div>
           </div>
@@ -101,9 +105,13 @@ interface Candidate {
 
         <!-- Primary Action Button -->
         <button ag-button variant="primary" (click)="generateSolutions()" [disabled]="loading()">
-          <span class="material-symbols-outlined text-sm" *ngIf="loading()">hourglass_empty</span>
+          @if (loading()) {
+            <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+          }
           {{ loading() ? 'Generating...' : 'Generate Solutions via pytriz MCP' }}
-          <span class="material-symbols-outlined text-sm" *ngIf="!loading()">arrow_forward</span>
+          @if (!loading()) {
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          }
         </button>
       </aside>
 
@@ -118,29 +126,33 @@ interface Candidate {
 
         <div class="flex flex-col gap-4">
           <!-- Live Generated Principles if loaded -->
-          <div *ngIf="principlesText()" class="p-6 bg-[#2A2A2C] border border-[#0A84FF] rounded-xl flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-              <h3 class="font-headline-sm text-lg font-semibold text-[#0A84FF]">Extracted TRIZ Principles [{{ improvingParam }}, {{ preservingParam }}]</h3>
-              <ag-badge theme="primary">Active Lookup</ag-badge>
+          @if (principlesText()) {
+            <div class="p-6 bg-[#2A2A2C] border border-[#0A84FF] rounded-xl flex flex-col gap-4">
+              <div class="flex justify-between items-center">
+                <h3 class="font-headline-sm text-lg font-semibold text-[#0A84FF]">Extracted TRIZ Principles [{{ improvingParam }}, {{ preservingParam }}]</h3>
+                <ag-badge theme="primary">Active Lookup</ag-badge>
+              </div>
+              <pre class="font-mono text-base text-white whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-[450px] bg-[#1C1C1E] p-4 rounded-lg border border-[#38383A]">{{ principlesText() }}</pre>
             </div>
-            <pre class="font-mono text-base text-white whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-[450px] bg-[#1C1C1E] p-4 rounded-lg border border-[#38383A]">{{ principlesText() }}</pre>
-          </div>
+          }
 
           <!-- Static Candidates -->
-          <div *ngFor="let c of candidates()" class="relative">
-            <ag-card [winner]="c.winner" [interactive]="!c.winner">
-              <div>
-                <h3 class="font-headline-sm text-base font-semibold text-white pr-12">{{ c.title }}</h3>
-                <p class="text-sm text-[#8E8E93] mt-2 leading-relaxed">{{ c.description }}</p>
-              </div>
-              
-              <div class="flex flex-wrap gap-3 mt-2">
-                <ag-badge theme="primary">Recovery: {{ c.recovery }}</ag-badge>
-                <ag-badge theme="muted">Scalability: {{ c.scalability }}</ag-badge>
-                <ag-badge [theme]="c.winner ? 'success' : 'muted'">Overall: {{ c.overall }}</ag-badge>
-              </div>
-            </ag-card>
-          </div>
+          @for (c of candidates(); track c.title) {
+            <div class="relative">
+              <ag-card [winner]="c.winner" [interactive]="!c.winner">
+                <div>
+                  <h3 class="font-headline-sm text-base font-semibold text-white pr-12">{{ c.title }}</h3>
+                  <p class="text-sm text-[#8E8E93] mt-2 leading-relaxed">{{ c.description }}</p>
+                </div>
+
+                <div class="flex flex-wrap gap-3 mt-2">
+                  <ag-badge theme="primary">Recovery: {{ c.recovery }}</ag-badge>
+                  <ag-badge theme="muted">Scalability: {{ c.scalability }}</ag-badge>
+                  <ag-badge [theme]="c.winner ? 'success' : 'muted'">Overall: {{ c.overall }}</ag-badge>
+                </div>
+              </ag-card>
+            </div>
+          }
         </div>
       </article>
     </main>
@@ -160,12 +172,42 @@ export class WorkbenchPage {
   parameters = [
     { id: 1, name: 'Weight of moving object' },
     { id: 2, name: 'Weight of stationary object' },
+    { id: 3, name: 'Length of moving object' },
+    { id: 4, name: 'Length of stationary object' },
+    { id: 5, name: 'Area of moving object' },
+    { id: 6, name: 'Area of stationary object' },
+    { id: 7, name: 'Volume of moving object' },
+    { id: 8, name: 'Volume of stationary object' },
+    { id: 9, name: 'Speed' },
+    { id: 10, name: 'Force' },
+    { id: 11, name: 'Stress or pressure' },
     { id: 12, name: 'Shape' },
+    { id: 13, name: "Stability of the object's composition" },
+    { id: 14, name: 'Strength' },
+    { id: 15, name: 'Duration of action by a moving object' },
+    { id: 16, name: 'Duration of action by a stationary object' },
+    { id: 17, name: 'Temperature' },
+    { id: 18, name: 'Illumination intensity' },
+    { id: 19, name: 'Use of energy by moving object' },
+    { id: 20, name: 'Use of energy by stationary object' },
+    { id: 21, name: 'Power' },
+    { id: 22, name: 'Loss of energy' },
+    { id: 23, name: 'Loss of substance' },
+    { id: 24, name: 'Loss of information' },
+    { id: 25, name: 'Loss of time' },
+    { id: 26, name: 'Quantity of substance/the matter' },
     { id: 27, name: 'Reliability' },
+    { id: 28, name: 'Measurement accuracy' },
     { id: 29, name: 'Manufacturing precision' },
-    { id: 32, name: 'Manufacturability' },
+    { id: 30, name: 'External harm affects the object' },
+    { id: 31, name: 'Object-generated harmful factors' },
+    { id: 32, name: 'Ease of manufacture' },
+    { id: 33, name: 'Ease of operation' },
+    { id: 34, name: 'Ease of repair' },
     { id: 35, name: 'Adaptability or versatility' },
     { id: 36, name: 'Device complexity' },
+    { id: 37, name: 'Difficulty of detecting and measuring' },
+    { id: 38, name: 'Extent of automation' },
     { id: 39, name: 'Productivity' },
   ];
 

@@ -4,12 +4,6 @@ import { TrizHttp } from '@workspace/http';
 import { AgBadge } from '../../components/ag-badge/ag-badge';
 import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segmented-toggle';
 
-interface MatrixCell {
-  rowId: number;
-  colId: number;
-  principles: string;
-}
-
 @Component({
   selector: 'app-matrix-page',
   imports: [
@@ -53,42 +47,46 @@ interface MatrixCell {
             </div>
             
             <!-- Col Headers -->
-            <div *ngFor="let col of cols"
-                 [attr.title]="getParameterName(col)"
-                 class="bg-[#2A2A2C] p-2 text-center font-mono text-[10px] text-white font-medium border-b-2 border-[#FF453A] cursor-help">
-              {{ col }}
-            </div>
+            @for (col of cols; track col) {
+              <div [attr.title]="getParameterName(col)"
+                   class="bg-[#2A2A2C] p-2 text-center font-mono text-[10px] text-white font-medium border-b-2 border-[#FF453A] cursor-help">
+                {{ col }}
+              </div>
+            }
 
             <!-- Matrix Rows -->
-            <ng-container *ngFor="let row of rows">
+            @for (row of rows; track row.id) {
               <!-- Row Header -->
               <div class="bg-[#2A2A2C] p-2 font-mono text-[10px] text-white font-medium border-r border-[#38383A] sticky left-0 z-20">
                 {{ row.id }}. {{ row.name }}
               </div>
 
               <!-- Cells -->
-              <div *ngFor="let col of cols"
-                   (click)="selectCell(row.id, col, row.name)"
-                   [class.bg-[#0A84FF]/10]="selectedRow() === row.id || selectedCol() === col"
-                   [class.border-[#0A84FF]]="selectedRow() === row.id && selectedCol() === col"
-                   [class.active-intersection]="selectedRow() === row.id && selectedCol() === col"
-                   class="bg-[#2C2C2E] p-2 text-center text-[10px] text-white cursor-pointer hover:bg-white/5 transition-all flex items-center justify-center font-mono min-h-[40px]">
-                <span [class.text-[#0A84FF]]="selectedRow() === row.id && selectedCol() === col"
-                      [class.font-bold]="hasData(row.id, col)">
-                  {{ getCellContent(row.id, col) }}
-                </span>
-              </div>
-            </ng-container>
+              @for (col of cols; track col) {
+                <button type="button"
+                     (click)="selectCell(row.id, col, row.name)"
+                     [class.bg-[#0A84FF]/10]="selectedRow() === row.id || selectedCol() === col"
+                     [class.border-[#0A84FF]]="selectedRow() === row.id && selectedCol() === col"
+                     [class.active-intersection]="selectedRow() === row.id && selectedCol() === col"
+                     class="appearance-none bg-[#2C2C2E] p-2 text-center text-[10px] text-white cursor-pointer hover:bg-white/5 transition-all flex items-center justify-center font-mono min-h-[40px] w-full">
+                  <span [class.text-[#0A84FF]]="selectedRow() === row.id && selectedCol() === col"
+                        [class.font-bold]="hasData(row.id, col)">
+                    {{ getCellContent(row.id, col) }}
+                  </span>
+                </button>
+              }
+            }
           </div>
         </div>
       </section>
     </div>
 
     <!-- Details Overlay Modal -->
-    <div *ngIf="showModal()" class="fixed inset-0 z-[100] flex items-center justify-center">
+    @if (showModal()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center">
       <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" (click)="closeModal()"></div>
-      
+      <button type="button" aria-label="Close modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity appearance-none cursor-default" (click)="closeModal()"></button>
+
       <!-- Modal Content -->
       <div class="bg-[#1C1C1E] border border-[#38383A] rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative z-10 flex flex-col max-h-[80vh] overflow-hidden">
         <div class="flex justify-between items-center p-5 border-b border-[#38383A]">
@@ -104,14 +102,18 @@ interface MatrixCell {
             <span>Worsening: {{ selectedColName() }}</span>
           </div>
 
-          <div *ngIf="loadingModal()" class="flex flex-col items-center justify-center py-10 gap-3">
-            <span class="material-symbols-outlined animate-spin text-[#0A84FF] text-3xl">hourglass_empty</span>
-            <span class="text-sm text-[#8E8E93]">Querying TRIZ matrix...</span>
-          </div>
+          @if (loadingModal()) {
+            <div class="flex flex-col items-center justify-center py-10 gap-3">
+              <span class="material-symbols-outlined animate-spin text-[#0A84FF] text-3xl">hourglass_empty</span>
+              <span class="text-sm text-[#8E8E93]">Querying TRIZ matrix...</span>
+            </div>
+          }
 
-          <div *ngIf="!loadingModal() && modalContent()" class="bg-[#2C2C2E] border border-[#38383A] p-4 rounded-lg leading-relaxed text-base text-white font-mono whitespace-pre-wrap max-h-[500px] overflow-auto">
-            {{ modalContent() }}
-          </div>
+          @if (!loadingModal() && modalContent()) {
+            <div class="bg-[#2C2C2E] border border-[#38383A] p-4 rounded-lg leading-relaxed text-base text-white font-mono whitespace-pre-wrap max-h-[500px] overflow-auto">
+              {{ modalContent() }}
+            </div>
+          }
         </div>
 
         <div class="p-4 border-t border-[#38383A] bg-[#2A2A2C] flex justify-end">
@@ -121,6 +123,7 @@ interface MatrixCell {
         </div>
       </div>
     </div>
+    }
   `,
   styles: [`
     .active-intersection {

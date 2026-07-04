@@ -1,12 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
 export class TrizService {
   private readonly logger = new Logger(TrizService.name);
-  private readonly mcpUrl = 'http://localhost:8124/mcp';
+  private readonly mcpUrl: string;
 
-  private async callMcpTool(name: string, args: any): Promise<string> {
+  constructor(configService: ConfigService) {
+    const host = configService.get<string>('MCP_HOST') || 'localhost';
+    const port = configService.get<string>('MCP_PORT') || '8123';
+    this.mcpUrl = `http://${host}:${port}/mcp`;
+  }
+
+  private async callMcpTool(name: string, args: Record<string, unknown>): Promise<string> {
     try {
       const response = await axios.post(
         this.mcpUrl,
@@ -37,8 +44,10 @@ export class TrizService {
         return content[0].text || '';
       }
       return '';
-    } catch (error: any) {
-      this.logger.error(`Error calling MCP tool ${name}: ${error.message}`, error.stack);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error calling MCP tool ${name}: ${message}`, stack);
       throw error;
     }
   }
