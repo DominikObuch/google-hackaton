@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsObject, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SolveProblemDto {
@@ -6,6 +7,38 @@ export class SolveProblemDto {
   @IsString()
   @IsNotEmpty()
   problem: string;
+}
+
+export class ContradictionDto {
+  action: string;
+  improvingFeature: string;
+  worseningFeature: string;
+  improvingParameterId?: number;
+  worseningParameterId?: number;
+}
+
+export class ExtractContradictionDto {
+  @IsString()
+  @IsNotEmpty()
+  problem: string;
+}
+
+export class GenerateTrizDto {
+  @IsString()
+  @IsNotEmpty()
+  problem: string;
+
+  @IsObject()
+  contradiction: ContradictionDto;
+}
+
+export class EvaluateCandidatesDto {
+  @IsString()
+  @IsNotEmpty()
+  problem: string;
+
+  @IsArray()
+  candidates: UnifiedCandidate[];
 }
 
 export interface ScientificPaper {
@@ -38,13 +71,7 @@ export interface UnifiedCandidate {
 
 export interface ReasoningTrail {
   originalProblem: string;
-  contradiction: {
-    action: string;
-    improvingFeature: string;
-    worseningFeature: string;
-    improvingParameterId?: number;
-    worseningParameterId?: number;
-  };
+  contradiction: ContradictionDto;
   candidates: UnifiedCandidate[];
   finalJustification: string;
 }

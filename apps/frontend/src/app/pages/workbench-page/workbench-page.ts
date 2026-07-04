@@ -6,7 +6,6 @@ import { PipelineService } from '../../services/pipeline.service';
 import { AgButton } from '../../components/ag-button/ag-button';
 import { AgCard } from '../../components/ag-card/ag-card';
 import { AgInput } from '../../components/ag-input/ag-input';
-import { AgBadge } from '../../components/ag-badge/ag-badge';
 import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segmented-toggle';
 
 @Component({
@@ -18,7 +17,6 @@ import { AgSegmentedToggle } from '../../components/ag-segmented-toggle/ag-segme
     AgButton,
     AgCard,
     AgInput,
-    AgBadge,
     AgSegmentedToggle,
   ],
   template: `

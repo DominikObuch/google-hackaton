@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TrizService } from '../triz/triz.service';
-import { SolveProblemDto, ReasoningTrail, UnifiedCandidate } from './dto/solver.dto';
+import { SolveProblemDto, ReasoningTrail, UnifiedCandidate, ContradictionDto } from './dto/solver.dto';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 
 @Injectable()
@@ -31,37 +31,31 @@ export class SolverService {
         return await this.ai.models.generateContent(request);
       } catch (error: any) {
         const errorStr = String(error);
-        if (errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+        if (errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED') || errorStr.includes('fetch failed')) {
           const waitTime = (i + 1) * 8000;
-          this.logger.warn(`Rate limit hit (429). Retrying in ${waitTime/1000}s... (Attempt ${i + 1}/${maxRetries})`);
+          this.logger.warn(`API error (${errorStr.includes('fetch failed') ? 'Network' : 'Rate Limit'}). Retrying in ${waitTime/1000}s... (Attempt ${i + 1}/${maxRetries})`);
           await this.delay(waitTime);
         } else {
+          this.logger.error('Unhandled GenAI error:', error);
           throw error;
         }
       }
     }
-    throw new Error('Max retries exceeded for Gemini API (429 Rate Limit)');
+    throw new Error('Max retries exceeded for Gemini API (Network/Rate Limit)');
   }
 
   async solve(dto: SolveProblemDto): Promise<ReasoningTrail> {
     this.logger.log(`Starting solving process for: ${dto.problem}`);
-    
-    // Step 1: Extract Contradiction
     const contradiction = await this.extractContradiction(dto.problem);
-    
-    // Step 2: Generate TRIZ candidates
     const trizCandidates = await this.generateTrizCandidates(dto.problem, contradiction);
-    
-    // Step 3: Generate LCA candidates with Web Search (Deep Research)
     const lcaCandidates = await this.generateLcaCandidates(dto.problem);
-
     // Step 4: Generate 5 Whys candidates (pure deductive root-cause analysis, no external knowledge base)
     const fiveWhysCandidates = await this.generateFiveWhysCandidates(dto.problem);
 
     // Step 5: Evaluate all candidates and create Unified model
     const allCandidates = [...trizCandidates, ...lcaCandidates, ...fiveWhysCandidates];
     const { evaluatedCandidates, finalJustification } = await this.evaluateCandidates(dto.problem, allCandidates);
-    
+
     return {
       originalProblem: dto.problem,
       contradiction,
@@ -70,9 +64,9 @@ export class SolverService {
     };
   }
 
-  private async extractContradiction(problem: string) {
+  async extractContradiction(problem: string): Promise<ContradictionDto> {
     this.logger.log('Step 1: Extracting technical contradiction...');
-    
+
     const responseSchema: Schema = {
       type: Type.OBJECT,
       properties: {
@@ -95,12 +89,12 @@ export class SolverService {
     return JSON.parse(response.text || '{}');
   }
 
-  private async generateTrizCandidates(problem: string, contradiction: any) {
+  async generateTrizCandidates(problem: string, contradiction: any) {
     this.logger.log('Step 2: Generating TRIZ candidates...');
-    
+
     const improvingParamsRes = await this.trizService.searchParameter(contradiction.improvingFeature, 1);
     const worseningParamsRes = await this.trizService.searchParameter(contradiction.worseningFeature, 1);
-    
+
     const extractId = async (mcpOutput: string) => {
       const res = await this.generateContentWithRetry({
         model: 'gemini-2.5-flash',
@@ -111,10 +105,10 @@ export class SolverService {
 
     const impId = await extractId(improvingParamsRes);
     const worId = await extractId(worseningParamsRes);
-    
+
     contradiction.improvingParameterId = impId;
     contradiction.worseningParameterId = worId;
-    
+
     let principlesText = '';
     if (impId > 0 && worId > 0 && impId !== worId) {
       principlesText = await this.trizService.browseContradictionMatrix([impId], [worId]);
@@ -155,18 +149,16 @@ export class SolverService {
     }));
   }
 
-  private async generateLcaCandidates(problem: string) {
+  async generateLcaCandidates(problem: string) {
     this.logger.log('Step 3: Generating LCA candidates via DeepSearch...');
-    
+
     const response = await this.generateContentWithRetry({
       model: 'gemini-2.5-flash',
-      contents: `You are a Sustainable Engineering expert. Use Google Search to research sustainable materials, Life Cycle Assessment (LCA) methodologies, and circular economy patterns applicable to this problem: "${problem}". Then, generate exactly 3 distinct candidate solutions based purely on LCA/Sustainability principles (e.g. material substitution, recycling, energy reduction). 
+      contents: `You are a Sustainable Engineering expert. Research sustainable materials, Life Cycle Assessment (LCA) methodologies, and circular economy patterns applicable to this problem: "${problem}". Then, generate exactly 3 distinct candidate solutions based purely on LCA/Sustainability principles (e.g. material substitution, recycling, energy reduction). 
       IMPORTANT: You MUST return ONLY a raw JSON array. Do not include markdown formatting like \`\`\`json. 
       The JSON array must contain objects with 'title', 'description', and 'scientificPapers'. 
-      'scientificPapers' MUST be an array of objects with 'title', 'url', and 'summary' representing real research papers, industry articles, or case studies you found via search that support the solution.`,
-      config: {
-        tools: [{ googleSearch: {} }]
-      }
+      'scientificPapers' MUST be an array of objects with 'title', 'url', and 'summary' representing real research papers, industry articles, or case studies that support the solution.`,
+      config: {}
     });
 
     let text = response.text || '[]';
@@ -181,7 +173,9 @@ export class SolverService {
     }));
   }
 
-  private async generateFiveWhysCandidates(problem: string) {
+
+
+  async generateFiveWhysCandidates(problem: string) {
     this.logger.log('Step 4: Generating 5 Whys candidates (deductive root-cause analysis)...');
 
     const responseSchema: Schema = {
@@ -235,9 +229,9 @@ Ask "Why does this happen?" and answer it, then ask "Why?" about that answer, re
     }));
   }
 
-  private async evaluateCandidates(problem: string, candidates: any[]) {
+  async evaluateCandidates(problem: string, candidates: any[]) {
     this.logger.log('Step 5: Evaluating all candidates into Unified model...');
-    
+
     const responseSchema: Schema = {
       type: Type.OBJECT,
       properties: {
@@ -273,8 +267,7 @@ Ask "Why does this happen?" and answer it, then ask "Why?" about that answer, re
     });
 
     const parsed = JSON.parse(response.text || '{}');
-    
-    // Merge evaluated data back into the candidates to form UnifiedCandidate
+
     const unifiedCandidates: UnifiedCandidate[] = candidates.map(c => {
       const evalData = parsed.evaluatedCandidates?.find((e: any) => e.id === c.id);
       return {

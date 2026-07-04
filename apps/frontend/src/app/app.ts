@@ -11,9 +11,9 @@ import { CommonModule } from '@angular/common';
       <nav class="bg-surface-container-low h-full w-64 fixed left-0 top-0 border-r border-border flex flex-col p-stack-lg z-50">
         <div class="mb-10">
           <h1 class="font-headline-md text-xl font-semibold text-text-primary mb-1">Giggs</h1>
-          <p class="font-label-mono text-xs text-text-muted font-medium">[SDG 12 E-Waste Engine]</p>
+          <p class="font-label-mono text-xs text-text-muted font-medium">[World #1 problem solving platform]</p>
         </div>
-        
+
         <ul class="flex flex-col gap-2 flex-grow">
           <li>
             <a routerLink="/matrix"
@@ -64,7 +64,7 @@ import { CommonModule } from '@angular/common';
             </a>
           </li>
         </ul>
-        
+
         <div class="mt-auto pt-6 border-t border-border flex flex-col gap-4">
           <a routerLink="/workbench" class="w-full bg-apple-blue text-white py-2.5 px-4 rounded-lg font-body-md text-sm font-medium hover:opacity-90 transition-opacity flex justify-between items-center group">
             <span>New Session</span>
