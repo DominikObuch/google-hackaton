@@ -253,7 +253,7 @@ cp .env.example .env
 
 This workspace is fully integrated with the Model Context Protocol (MCP), allowing AI assistants (such as Claude Code, Cursor, or Windsurf) to interact directly with the local development stack, workspace tools, database, and documentation.
 
-The server definitions are configured in [.antigravity/mcp_config.json](file:///home/billie/projekt/google-hackaton/.antigravity/mcp_config.json) (mirrored in [mcp_config.json](file:///home/billie/projekt/google-hackaton/mcp_config.json)).
+The server definitions are configured in [.antigravity/mcp_config.json](.antigravity/mcp_config.json) (mirrored in [mcp_config.json](mcp_config.json)).
 
 ### Workspace MCP Servers configuration
 
@@ -295,7 +295,7 @@ To connect your AI assistant, configure your client settings with the workspace-
 
 - **Type**: Streamable HTTP
 - **URL**: `http://localhost:8123/mcp`
-- **Location**: [mcp-server/](file:///home/billie/projekt/google-hackaton/mcp-server/) (Python FastMCP implementation)
+- **Location**: [mcp-server/](mcp-server/) (Python FastMCP implementation)
 - **Description**: Exposes `pytriz` tools to lookup Inventive Principles from the TRIZ contradiction matrix and perform semantic search over parameters.
 - **Key Tools**:
   - `browse_contradiction_matrix`: Look up Inventive Principles from the TRIZ contradiction matrix.
@@ -309,7 +309,7 @@ To connect your AI assistant, configure your client settings with the workspace-
 
 - **Type**: Stdio / Executable
 - **Command**: `npx qmd mcp`
-- **Description**: Connects to the local engineering wiki ([docs/wiki/](file:///home/billie/projekt/google-hackaton/docs/wiki/)) to query architectural and implementation guidelines.
+- **Description**: Connects to the local engineering wiki ([docs/wiki/](docs/wiki/)) to query architectural and implementation guidelines.
 - **Key Tools**:
   - `query`: Hybrid search with BM25, semantic search, and re-ranking.
   - `get`: Retrieve a document's full content or specific line ranges by ID/path.

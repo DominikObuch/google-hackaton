@@ -1,20 +1,20 @@
 {
   "mcpServers": {
     "angular-cli": {
-      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/ng",
-      "args": ["mcp"]
+      "command": "npx",
+      "args": ["ng", "mcp"]
     },
     "nx": {
-      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/nx",
-      "args": ["mcp"]
+      "command": "npx",
+      "args": ["nx", "mcp"]
     },
     "qmd": {
-      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/qmd",
-      "args": ["mcp"]
+      "command": "npx",
+      "args": ["qmd", "mcp"]
     },
     "ng-diagram": {
-      "command": "/home/billie/projekt/google-hackaton/node_modules/.bin/ng-diagram-mcp",
-      "args": []
+      "command": "npx",
+      "args": ["ng-diagram-mcp"]
     },
     "postgres": {
       "command": "npx",

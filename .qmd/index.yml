@@ -1,6 +1,6 @@
 collections:
   google-hackaton:
-    path: /home/billie/projekt/google-hackaton
+    path: .
     pattern: '**/*.md'
     includeByDefault: true
     ignore:
