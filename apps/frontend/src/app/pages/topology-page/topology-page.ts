@@ -19,26 +19,27 @@ import { PipelineService, PipelineStage } from '../../services/pipeline.service'
 /* ---------------------------------------------------------------------------
  * Pipeline stage ordering for comparison
  * --------------------------------------------------------------------------- */
-const STAGE_ORDER: PipelineStage[] = ['idle', 'prompt', 'triz', 'gemini', 'arena', 'done'];
+const STAGE_ORDER: PipelineStage[] = ['idle', 'prompt', 'solving', 'done'];
 
 function stageIndex(stage: PipelineStage): number {
   return STAGE_ORDER.indexOf(stage);
 }
 
-/* Node-to-stage mapping */
+/* Node-to-stage mapping. The backend runs TRIZ, LCA/Gemini and Arena evaluation inside a
+   single 'solving' call, so those diagram nodes all light up during that one stage. */
 const NODE_STAGE_MAP: Record<string, PipelineStage> = {
   'prompt': 'prompt',
-  'triz': 'triz',
-  'gemini': 'gemini',
-  'arena': 'arena',
+  'triz': 'solving',
+  'gemini': 'solving',
+  'arena': 'solving',
   'results': 'done',
 };
 
 /* Edge-to-stage mapping (edge becomes active when target stage starts) */
 const EDGE_TARGET_STAGE: Record<string, PipelineStage> = {
-  'link-prompt-triz': 'triz',
-  'link-triz-gemini': 'gemini',
-  'link-gemini-arena': 'arena',
+  'link-prompt-triz': 'solving',
+  'link-triz-gemini': 'solving',
+  'link-gemini-arena': 'solving',
   'link-arena-results': 'done',
 };
 

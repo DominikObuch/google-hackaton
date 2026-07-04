@@ -15,11 +15,12 @@ export interface ScientificPaper {
 }
 
 export interface UnifiedCandidate {
-  id: string; // e.g. TRIZ-1, LCA-1
-  source: 'TRIZ' | 'LCA' | 'COMBINED';
+  id: string; // e.g. TRIZ-1, LCA-1, 5WHYS-1
+  source: 'TRIZ' | 'LCA' | 'FIVE_WHYS' | 'COMBINED';
   title: string;
   description: string;
   principles?: string; // e.g. "Segmentation (1), Changing the Color (32)"
+  rootCause?: string; // 5 Whys: the root cause the candidate addresses
   
   // Flattened Scores
   feasibilityScore: number;

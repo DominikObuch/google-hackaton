@@ -13,9 +13,9 @@ export class SolverService {
     private readonly configService: ConfigService,
     private readonly trizService: TrizService
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY') || process.env.GEMINI_API_KEY;
+    const apiKey = this.configService.get<string>('AI_STUDIO_API_KEY') || process.env.AI_STUDIO_API_KEY;
     if (!apiKey) {
-      this.logger.warn('GEMINI_API_KEY is not defined. Google GenAI calls will fail.');
+      this.logger.warn('AI_STUDIO_API_KEY is not defined. Google GenAI calls will fail.');
     }
     this.ai = new GoogleGenAI({ apiKey });
   }
@@ -54,9 +54,12 @@ export class SolverService {
     
     // Step 3: Generate LCA candidates with Web Search (Deep Research)
     const lcaCandidates = await this.generateLcaCandidates(dto.problem);
-    
-    // Step 4: Evaluate all candidates and create Unified model
-    const allCandidates = [...trizCandidates, ...lcaCandidates];
+
+    // Step 4: Generate 5 Whys candidates (pure deductive root-cause analysis, no external knowledge base)
+    const fiveWhysCandidates = await this.generateFiveWhysCandidates(dto.problem);
+
+    // Step 5: Evaluate all candidates and create Unified model
+    const allCandidates = [...trizCandidates, ...lcaCandidates, ...fiveWhysCandidates];
     const { evaluatedCandidates, finalJustification } = await this.evaluateCandidates(dto.problem, allCandidates);
     
     return {
@@ -178,8 +181,62 @@ export class SolverService {
     }));
   }
 
+  private async generateFiveWhysCandidates(problem: string) {
+    this.logger.log('Step 4: Generating 5 Whys candidates (deductive root-cause analysis)...');
+
+    const responseSchema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        whyChain: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "Exactly 5 answers, one per successive 'Why?' question, drilling deeper into causation."
+        },
+        rootCause: { type: Type.STRING, description: "The single root cause reached after the 5 Whys." },
+        candidates: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: ["title", "description"]
+          },
+          description: "Exactly 3 solutions addressing the root cause directly."
+        }
+      },
+      required: ["whyChain", "rootCause", "candidates"]
+    };
+
+    const response = await this.generateContentWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: `You are running the "5 Whys" root-cause-analysis method. Do NOT use any external knowledge base, contradiction matrix, or fixed list of principles - reason purely by sequential deduction, independently of TRIZ and LCA.
+
+Problem: "${problem}"
+
+Ask "Why does this happen?" and answer it, then ask "Why?" about that answer, repeating until you have asked "Why?" exactly 5 times (each answer one level deeper). State the resulting root cause, then propose exactly 3 solution ideas that address the ROOT CAUSE directly, not the surface symptoms.`,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema,
+      }
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    const rootCause: string = parsed.rootCause || '';
+    const candidates = parsed.candidates || [];
+    return candidates.slice(0, 3).map((c: any, index: number) => ({
+      id: `5WHYS-${index + 1}`,
+      source: 'FIVE_WHYS',
+      title: c.title,
+      description: c.description,
+      rootCause,
+      scientificPapers: []
+    }));
+  }
+
   private async evaluateCandidates(problem: string, candidates: any[]) {
-    this.logger.log('Step 4: Evaluating all candidates into Unified model...');
+    this.logger.log('Step 5: Evaluating all candidates into Unified model...');
     
     const responseSchema: Schema = {
       type: Type.OBJECT,

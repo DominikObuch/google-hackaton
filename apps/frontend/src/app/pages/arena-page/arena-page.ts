@@ -37,13 +37,17 @@ import { PipelineService } from '../../services/pipeline.service';
             <div class="flex justify-between items-start">
               <h3 class="font-headline-sm text-base font-semibold text-white">Candidate: {{ candidate.title }}</h3>
               <div class="flex gap-2">
-                 <ag-badge [theme]="candidate.source === 'LCA' ? 'success' : 'primary'">{{ candidate.source }}</ag-badge>
+                 <ag-badge [theme]="sourceTheme(candidate.source)">{{ sourceLabel(candidate.source) }}</ag-badge>
               </div>
             </div>
             <p class="text-xs text-[#8E8E93] leading-relaxed mt-2">{{ candidate.description }}</p>
-            
+
             <div *ngIf="candidate.principles" class="mt-2 text-xs text-[#0A84FF]">
               Principles: {{ candidate.principles }}
+            </div>
+
+            <div *ngIf="candidate.rootCause" class="mt-2 text-xs text-[#FF9F0A]">
+              Root cause: {{ candidate.rootCause }}
             </div>
 
             <!-- Deep Research / Scientific Papers -->
@@ -289,5 +293,16 @@ export class ArenaPage implements OnInit {
 
   formatDescription(text: string): string {
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  sourceLabel(source: string): string {
+    if (source === 'FIVE_WHYS') return '5 Whys';
+    return source;
+  }
+
+  sourceTheme(source: string): 'primary' | 'success' | 'warning' {
+    if (source === 'LCA') return 'success';
+    if (source === 'FIVE_WHYS') return 'warning';
+    return 'primary';
   }
 }
